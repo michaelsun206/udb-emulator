@@ -127,6 +127,39 @@ data class DSSCommand(
                 command = "RB"
             )
         }
+        fun createOKResponse(source: String, destination: String): DSSCommand {
+            return DSSCommand(
+                source = source,
+                destination = destination,
+                command = StandardResponse.OK.name
+            )
+        }
+
+        fun createRTResponse(source: String, destination: String, registerName: String, registerVaule: String): DSSCommand {
+            return DSSCommand(
+                source = source,
+                destination = destination,
+                command = StandardResponse.RT.name,
+                data = arrayListOf(registerName, registerVaule)
+            )
+        }
+
+        fun createIDResponse(source: String, destination: String, serialNumber: String): DSSCommand {
+            return DSSCommand(
+                source = source,
+                destination = destination,
+                command = StandardResponse.ID.name,
+                data = listOf(serialNumber)
+            )
+        }
+
+        fun createNOResponse(source: String, destination: String): DSSCommand {
+            return DSSCommand(
+                source = source,
+                destination = destination,
+                command = StandardResponse.NO.name
+            )
+        }
     }
 
     // Computed Checksum using CRC16

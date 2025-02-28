@@ -1,11 +1,15 @@
 package com.dss.udb.emulator.register
 
+import com.dss.udb.emulator.dsscommand.DSSCommand
+import com.dss.udb.emulator.dsscommand.StandardRequest
+
 enum class Direction {
     UDB_TO_GUI,
     GUI_TO_UDB,
     BOTH
 }
 
+// Enum class
 enum class DataType(val description: String) {
     BITMAP_64("64-bit Bitmap"),
     UINT32("32-bit Unsigned Int"),
@@ -15,24 +19,67 @@ enum class DataType(val description: String) {
     override fun toString(): String = description
 }
 
+// Register class with union-like behavior
 data class Register(
     val name: String,
     val dataType: DataType,
     val regMapBit: Int,
     val description: String,
-    val direction: Direction,
-    val value: String = ""
+    val direction: Direction
 ) {
-    fun getValueString(): String {
-        return this.value
+    private var intValue: Int? = null
+    private var longValue: Long? = null
+    private var stringValue: String = ""
+
+    init {
+        when (dataType) {
+            DataType.SIGNED_INT32, DataType.UINT32 -> intValue = 0
+            DataType.BITMAP_64 -> longValue = 0L
+            DataType.STRING -> stringValue = ""
+        }
+    }
+
+    fun setValueString(value: String) {
+        when (dataType) {
+            DataType.SIGNED_INT32, DataType.UINT32 -> intValue = value.toIntOrNull()
+            DataType.BITMAP_64 -> longValue = value.toLongOrNull()
+            DataType.STRING -> stringValue = value
+        }
     }
 
     fun getValue(): Any? {
-        return when (this.dataType) {
-            DataType.SIGNED_INT32 -> value.toIntOrNull()
-            DataType.UINT32 -> value.toIntOrNull()
-            DataType.STRING -> value
-            DataType.BITMAP_64 -> value.toLongOrNull()
+        return when (dataType) {
+            DataType.SIGNED_INT32, DataType.UINT32 -> intValue
+            DataType.BITMAP_64 -> longValue
+            DataType.STRING -> stringValue
+        }
+    }
+
+    fun setValue(value: Any) {
+        when (dataType) {
+            DataType.SIGNED_INT32, DataType.UINT32 -> {
+                if (value is Int) {
+                    intValue = value
+                } else {
+                    throw IllegalArgumentException("Expected an Int for $dataType, got ${value::class.simpleName}")
+                }
+            }
+
+            DataType.BITMAP_64 -> {
+                if (value is Long) {
+                    longValue = value
+                } else {
+                    throw IllegalArgumentException("Expected a Long for $dataType, got ${value::class.simpleName}")
+                }
+            }
+
+            DataType.STRING -> {
+                if (value is String) {
+                    stringValue = value
+                } else {
+                    throw IllegalArgumentException("Expected a String for $dataType, got ${value::class.simpleName}")
+                }
+            }
         }
     }
 }
@@ -404,6 +451,12 @@ object Registers {
         description = "Report legend, such as units of measure",
         direction = Direction.UDB_TO_GUI
     )
+
+    init {
+        SN.setValue(0x00000000)
+        FIRMWARE.setValue(0x12300000)
+        SOUNDSPEED.setValue(0x00000000)
+    }
 }
 
 val registerList: List<Register> = listOf(
@@ -445,3 +498,126 @@ val registerList: List<Register> = listOf(
 )
 
 val registerMap: Map<String, Register> = registerList.associateBy { it.name }
+
+const val PASSWORD = "1776"
+
+// Function to parse the GET (GT) command
+fun parseRegisterGetCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.GT.toString()) { "Invalid command: Expected GET (GT) command" }
+    require(command.data.size == 1) { "Invalid data size: Expected exactly one data entry" }
+    val registerName = command.data[0]
+    val register = registerMap[registerName]
+        ?: throw IllegalArgumentException("Invalid register: '$registerName' not found in register map")
+    val registerValue = register.getValue().toString()
+
+    return DSSCommand.createRTResponse(
+        command.destination,
+        command.source,
+        register.name,
+        registerValue
+    )
+}
+
+// Function to parse the SET (ST) command
+fun parseRegisterSetCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.ST.toString()) { "Invalid command: Expected SET (ST) command" }
+    require(command.data.size == 2) { "Invalid data size: Expected exactly two data entries" }
+    val registerName = command.data[0]
+    val registerValue = command.data[1]
+    val register = registerMap[registerName]
+        ?: throw IllegalArgumentException("Invalid register: '$registerName' not found in register map")
+    register.setValueString(registerValue)
+
+    return if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
+        DSSCommand.createOKResponse(command.destination, command.source)
+    } else {
+        DSSCommand.createNOResponse(command.destination, command.source)
+    }
+}
+
+// Function to parse the GET ID (GI) command
+fun parseRegisterGetIDCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.GI.toString()) { "Invalid command: Expected GET ID (GI) command" }
+    require(command.data.isEmpty()) { "Invalid data size: Expected no data entries" }
+    val serialNumber = Registers.SN.getValue().toString()
+    return DSSCommand.createIDResponse(command.destination, command.source, serialNumber)
+}
+
+// Function to parse the SET ID (SI) command
+fun parseRegisterSetIDCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.SI.toString()) { "Invalid command: Expected SET ID (SI) command" }
+    require(command.data.size == 2) { "Invalid data size: Expected exactly two data entries" }
+    val password = command.data[0]
+    val serialNumber = command.data[1]
+
+    return if (password == PASSWORD) {
+        Registers.SN.setValueString(serialNumber)
+        DSSCommand.createOKResponse(command.destination, command.source)
+    } else {
+        DSSCommand.createNOResponse(command.destination, command.source)
+    }
+}
+
+// Function to parse the SET Protected Register (SP) command
+fun parseSetProtectedRegisterCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.SP.toString()) { "Invalid command: Expected SET Protected Register (SP) command" }
+    require(command.data.size == 3) { "Invalid data size: Expected exactly three data entries" }
+    val password = command.data[0]
+    val registerName = command.data[1]
+    val registerValue = command.data[2]
+
+    if (password == PASSWORD) {
+        val register = registerMap[registerName]
+            ?: throw IllegalArgumentException("Invalid register: '$registerName' not found in register map")
+        register.setValueString(registerValue)
+
+        return if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
+            DSSCommand.createOKResponse(command.destination, command.source)
+        } else {
+            DSSCommand.createNOResponse(command.destination, command.source)
+        }
+    }
+    return DSSCommand.createNOResponse(command.destination, command.source)
+}
+
+// Function to parse the Factory Test (FT) command
+fun parseFactoryTestCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.FT.toString()) { "Invalid command: Expected Factory Test (FT) command" }
+    // Implement the factory test initiation logic here
+    // For demonstration, we'll return an OK response
+    return DSSCommand.createOKResponse(command.destination, command.source)
+}
+
+// Function to parse the Reboot (RB) command
+fun parseRebootCommand(command: DSSCommand): DSSCommand {
+    require(command.command == StandardRequest.RB.toString()) { "Invalid command: Expected Reboot (RB) command" }
+    // Implement the reboot logic here
+    // For demonstration, we'll return an OK response
+    return DSSCommand.createOKResponse(command.destination, command.source)
+}
+
+// Function to parse the Register Map change report (RM) command
+fun parseRegisterMapChangeReportCommand(command: DSSCommand) {
+    require(command.command == StandardRequest.RM.toString()) { "Invalid command: Expected Register Map Change Report (RM) command" }
+    require(command.data.size == 1) { "Invalid data size: Expected one data entry here" }
+
+    val registerMapBit = command.data[0].toLong()
+
+    for (register in registerList) {
+        if ((1L shl register.regMapBit) and registerMapBit != 0L) {
+            DSSCommand.createGetFieldCommand(command.destination, command.source, register.name)
+        }
+    }
+}
+fun handleCommand(command: DSSCommand): DSSCommand {
+    return when (command.command) {
+        StandardRequest.GT.toString() -> parseRegisterGetCommand(command)
+        StandardRequest.ST.toString() -> parseRegisterSetCommand(command)
+        StandardRequest.GI.toString() -> parseRegisterGetIDCommand(command)
+        StandardRequest.SI.toString() -> parseRegisterSetIDCommand(command)
+        StandardRequest.SP.toString() -> parseSetProtectedRegisterCommand(command)
+        StandardRequest.FT.toString() -> parseFactoryTestCommand(command)
+        StandardRequest.RB.toString() -> parseRebootCommand(command)
+        else -> throw IllegalArgumentException("Unknown command: ${command.command}")
+    }
+}
