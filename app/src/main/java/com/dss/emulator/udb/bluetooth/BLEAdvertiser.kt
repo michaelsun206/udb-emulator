@@ -1,10 +1,10 @@
 // File: BLEAdvertiser.kt
-package com.dss.udb.emulator.bluetooth
+package com.dss.emulator.udb.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.AdvertiseCallback
 import android.util.Log
-import com.dss.udb.emulator.Constants
+import com.dss.emulator.udb.Constants
 
 class BLEAdvertiser(
     private val controllerManager: BluetoothControllerManager
@@ -27,7 +27,8 @@ class BLEAdvertiser(
 
         advertiser.startAdvertising(
             Constants.ADVERTISE_SETTINGS,
-            Constants.getAdvertiseData(), advertiseCallback)
+            Constants.getAdvertiseData(), advertiseCallback
+        )
         Log.d("BLE Advertiser", "Started advertising")
     }
 

@@ -1,12 +1,11 @@
-package com.dss.udb.emulator.bluetooth
+package com.dss.emulator.udb.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
-import com.dss.udb.emulator.Constants
-import com.dss.udb.emulator.PermissionsManager
-import com.dss.udb.emulator.UDBDevice
+import com.dss.emulator.udb.PermissionsManager
+import com.dss.emulator.udb.UDBDevice
 
 class BluetoothController(
     private val context: Context,

@@ -1,5 +1,5 @@
 // File: Constants.kt
-package com.dss.udb.emulator
+package com.dss.emulator.udb
 
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
@@ -12,9 +12,12 @@ object Constants {
     // Service and Characteristic UUIDs
 //    var UDB_SERVICE_UUID: UUID = UUID.fromString("0000180A-0000-1000-8000-00805F9B34FB");
     val UDB_SERVICE_UUID: UUID = UUID.fromString("0003ABCD-0000-1000-8000-00805F9B0131")
-    val DATA_READ_CHARACTERISTIC_UUID: UUID = UUID.fromString("00031201-0000-1000-8000-00805f9b0130")
-    val COMMAND_WRITE_CHARACTERISTIC_UUID: UUID = UUID.fromString("00031202-0000-1000-8000-00805f9b0130")
-    val CHARACTERISTIC_USER_DESCRIPTION_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
+    val DATA_READ_CHARACTERISTIC_UUID: UUID =
+        UUID.fromString("00031201-0000-1000-8000-00805f9b0130")
+    val COMMAND_WRITE_CHARACTERISTIC_UUID: UUID =
+        UUID.fromString("00031202-0000-1000-8000-00805f9b0130")
+    val CHARACTERISTIC_USER_DESCRIPTION_UUID: UUID =
+        UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
 
     // Device Name
     const val DEVICE_NAME: String = "UDB-E"
@@ -54,14 +57,18 @@ object Constants {
         val advertiseData = builder.build()
 
         // Log the size of the advertisement data
-        Log.d("AdvertiseData", "Manufacturer Specific Data Size: ${advertiseData.manufacturerSpecificData.size()}")
+        Log.d(
+            "AdvertiseData",
+            "Manufacturer Specific Data Size: ${advertiseData.manufacturerSpecificData.size()}"
+        )
         Log.d("AdvertiseData", "Service UUIDs Size: ${advertiseData.serviceUuids.size}")
 
         return advertiseData
     }
 
     // Scan Settings
-    val SCAN_SETTINGS: android.bluetooth.le.ScanSettings = android.bluetooth.le.ScanSettings.Builder()
-        .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
-        .build()
+    val SCAN_SETTINGS: android.bluetooth.le.ScanSettings =
+        android.bluetooth.le.ScanSettings.Builder()
+            .setScanMode(android.bluetooth.le.ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .build()
 }

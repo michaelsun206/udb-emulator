@@ -1,7 +1,7 @@
-package com.dss.udb.emulator.register
+package com.dss.emulator.udb.register
 
-import com.dss.udb.emulator.dsscommand.DSSCommand
-import com.dss.udb.emulator.dsscommand.StandardRequest
+import com.dss.emulator.udb.dsscommand.DSSCommand
+import com.dss.emulator.udb.dsscommand.StandardRequest
 
 enum class Direction {
     UDB_TO_GUI,
@@ -609,6 +609,7 @@ fun parseRegisterMapChangeReportCommand(command: DSSCommand) {
         }
     }
 }
+
 fun handleCommand(command: DSSCommand): DSSCommand {
     return when (command.command) {
         StandardRequest.GT.toString() -> parseRegisterGetCommand(command)

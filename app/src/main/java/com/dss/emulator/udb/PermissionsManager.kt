@@ -1,5 +1,5 @@
 // File: PermissionsManager.kt
-package com.dss.udb.emulator
+package com.dss.emulator.udb
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -27,6 +27,14 @@ class PermissionsManager(
             requestPermissionLauncher.launch(missingPermissions.toTypedArray())
         } else {
             onResult(true)
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(arrayOf(android.Manifest.permission.BLUETOOTH_CONNECT))
         }
     }
 }

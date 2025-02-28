@@ -1,20 +1,21 @@
-package com.dss.udb.emulator
+package com.dss.emulator.udb
 
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.dss.udb.emulator.bluetooth.BluetoothController
+import com.dss.emulator.udb.bluetooth.BluetoothController
+import com.dss.emulator.udb.R
 
-class MainActivity : ComponentActivity() {
+class RcRiEmulatorActivity : ComponentActivity() {
 
     private lateinit var bluetoothController: BluetoothController
     private lateinit var udbDeviceAdapter: UDBDeviceAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_rc_ri_emulator)
 
         initializeButtonActions();
         setupRecyclerView()

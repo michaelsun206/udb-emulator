@@ -1,11 +1,11 @@
 // File: GattServerManager.kt
-package com.dss.udb.emulator.bluetooth
+package com.dss.emulator.udb.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.content.Context
 import android.util.Log
-import com.dss.udb.emulator.Constants
+import com.dss.emulator.udb.Constants
 
 class GattServerManager(
     private val context: Context,

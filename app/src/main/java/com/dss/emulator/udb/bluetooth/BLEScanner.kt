@@ -1,12 +1,12 @@
 // File: BLEScanner.kt
-package com.dss.udb.emulator.bluetooth
+package com.dss.emulator.udb.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.util.Log
-import com.dss.udb.emulator.Constants
-import com.dss.udb.emulator.UDBDevice
+import com.dss.emulator.udb.Constants
+import com.dss.emulator.udb.UDBDevice
 
 class BLEScanner(
     private val controllerManager: BluetoothControllerManager,

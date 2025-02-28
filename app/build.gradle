@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.dss.udb.emulator'
+    namespace 'com.dss.emulator.udb'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.dss.udb.emulator"
+        applicationId "com.dss.emulator.udb"
         minSdk 24
         targetSdk 34
         versionCode 1

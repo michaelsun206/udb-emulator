@@ -1,5 +1,5 @@
 // File: BluetoothControllerManager.kt
-package com.dss.udb.emulator.bluetooth
+package com.dss.emulator.udb.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter

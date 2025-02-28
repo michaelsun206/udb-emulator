@@ -1,4 +1,4 @@
-package com.dss.udb.emulator.dsscommand
+package com.dss.emulator.udb.dsscommand
 
 data class DSSCommand(
     var source: String = "",
@@ -127,6 +127,7 @@ data class DSSCommand(
                 command = "RB"
             )
         }
+
         fun createOKResponse(source: String, destination: String): DSSCommand {
             return DSSCommand(
                 source = source,
@@ -135,7 +136,12 @@ data class DSSCommand(
             )
         }
 
-        fun createRTResponse(source: String, destination: String, registerName: String, registerVaule: String): DSSCommand {
+        fun createRTResponse(
+            source: String,
+            destination: String,
+            registerName: String,
+            registerVaule: String
+        ): DSSCommand {
             return DSSCommand(
                 source = source,
                 destination = destination,
@@ -144,7 +150,11 @@ data class DSSCommand(
             )
         }
 
-        fun createIDResponse(source: String, destination: String, serialNumber: String): DSSCommand {
+        fun createIDResponse(
+            source: String,
+            destination: String,
+            serialNumber: String
+        ): DSSCommand {
             return DSSCommand(
                 source = source,
                 destination = destination,

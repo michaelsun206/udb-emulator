@@ -1,4 +1,4 @@
-package com.dss.udb.emulator.dsscommand
+package com.dss.emulator.udb.dsscommand
 
 enum class StandardResponse(val value: Int) {
     OK(0), // Acknowledge Response

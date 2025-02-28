@@ -1,4 +1,4 @@
-package com.dss.udb.emulator
+package com.dss.emulator.udb
 
 import org.junit.Test
 

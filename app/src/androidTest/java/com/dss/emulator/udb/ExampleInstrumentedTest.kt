@@ -1,4 +1,4 @@
-package com.dss.udb.emulator
+package com.dss.emulator.udb
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.dss.udb.emulator", appContext.packageName)
+        assertEquals("com.dss.emulator.udb", appContext.packageName)
     }
 }
