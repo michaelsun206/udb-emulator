@@ -10,7 +10,7 @@ class BLECentral(
     private val bluetoothControllerManager: BluetoothControllerManager,
     private val onDeviceFound: (UDBDevice) -> Unit
 ) {
-    private val scanner = BLEScanner(bluetoothControllerManager, onDeviceFound)
+    private val scanner = BLEScanner(context, bluetoothControllerManager, onDeviceFound)
 
     fun startScanning() {
         scanner.startScanning()

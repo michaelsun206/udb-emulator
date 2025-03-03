@@ -15,6 +15,7 @@ class BLECentralController(
     private lateinit var bluetoothControllerManager: BluetoothControllerManager
     private val scanner: BLEScanner by lazy {
         BLEScanner(
+            context,
             bluetoothControllerManager,
             onDeviceFound
         )

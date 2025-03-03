@@ -4,9 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
-import com.dss.emulator.udb.R
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.central.BLECentralController
+import com.dss.emulator.udb.R
 
 class RcRiEmulatorActivity : ComponentActivity() {
 
@@ -20,6 +20,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
         setContentView(R.layout.activity_rc_ri_emulator)
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
+            Log.e("Permissions", "Bluetooth permissions denied")
+
             if (!granted) {
                 Log.e("Permissions", "Bluetooth permissions denied")
 
@@ -34,6 +36,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
             }
         }
 
+        permissionsManager.checkAndRequestPermissions()
 
         bleCentralController = BLECentralController(
             context = this,
@@ -80,7 +83,6 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
     private fun showDeviceListDialog() {
         devicesDialog.startScanning()
-        devicesDialog.setTitle("Finding UDB Devices...")
         devicesDialog.show()
     }
 }

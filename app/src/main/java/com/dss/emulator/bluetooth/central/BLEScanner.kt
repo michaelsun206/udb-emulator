@@ -1,56 +1,127 @@
-// File: BLEScanner.kt
 package com.dss.emulator.bluetooth.central
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
-import com.dss.emulator.bluetooth.Constants
+import androidx.core.content.ContextCompat
 import com.dss.emulator.UDBDevice
 
+
 class BLEScanner(
+    private val context: Context,
     private val controllerManager: BluetoothControllerManager,
     private val onDeviceFound: (UDBDevice) -> Unit
 ) {
-
     private val scannedDevices = mutableListOf<UDBDevice>()
-    private val scanCallback = object : ScanCallback() {
+    private var isScanning = false
+
+    // Create default scan settings (fast mode)
+    private val scanSettings = ScanSettings.Builder()
+        .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+        .build()
+
+    private val scanCallback: ScanCallback = object : ScanCallback() {
+        override fun onScanFailed(errorCode: Int) {
+            super.onScanFailed(errorCode)
+            Log.e("BLEScanner", "Scan failed with error: $errorCode")
+        }
+
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
-            result?.let {
+            result?.device?.let { deviceInfo ->
                 val device = UDBDevice(
-                    address = it.device.address,
-                    name = it.device.name ?: "Unknown",
-                    rssi = it.rssi
+                    address = deviceInfo.address,
+                    name = deviceInfo.name ?: "Unknown",
+                    rssi = result.rssi
                 )
-                if (!scannedDevices.any { d -> d.address == device.address }) {
+                if (scannedDevices.none { it.address == device.address }) {
                     scannedDevices.add(device)
-                    Log.d("BLE Scanner", "Device found: ${device.address} ${device.name}")
+                    Log.d("BLEScanner", "Device found: ${device.address} ${device.name}")
                     onDeviceFound(device)
                 }
             }
-        }
-
-        override fun onScanFailed(errorCode: Int) {
-            super.onScanFailed(errorCode)
-            Log.e("BLE Scanner", "Scan failed with error: $errorCode")
         }
     }
 
     @SuppressLint("MissingPermission")
     fun startScanning() {
-        controllerManager.adapter.bluetoothLeScanner.startScan(
-            null,
-            Constants.SCAN_SETTINGS,
-            scanCallback
-        )
-        Log.d("BLE Scanner", "Started scanning")
+        if (!hasRequiredPermissions()) {
+            Log.e("BLEScanner", "Missing required BLE permissions or location services disabled.")
+            return
+        }
+
+        if (isScanning) {
+            Log.d("BLEScanner", "Scanner already running.")
+            return
+        }
+
+        val scanner = controllerManager.adapter.bluetoothLeScanner
+        if (scanner == null) {
+            Log.e("BLEScanner", "bluetoothLeScanner is null - check adapter or Bluetooth state.")
+            return
+        }
+
+        scannedDevices.clear()
+        scanner.startScan(listOf(), scanSettings, scanCallback)
+        isScanning = true
+        Log.d("BLEScanner", "BLE scan started successfully.")
     }
 
     @SuppressLint("MissingPermission")
     fun stopScanning() {
-        controllerManager.adapter.bluetoothLeScanner.stopScan(scanCallback)
-        Log.d("BLE Scanner", "Stopped scanning")
+        if (!isScanning) {
+            Log.d("BLEScanner", "Scanner already stopped.")
+            return
+        }
+
+        val scanner = controllerManager.adapter.bluetoothLeScanner
+        if (scanner != null) {
+            scanner.stopScan(scanCallback)
+            Log.d("BLEScanner", "BLE scan stopped.")
+        } else {
+            Log.e("BLEScanner", "Cannot stop scan, bluetoothLeScanner is null.")
+        }
+        isScanning = false
+    }
+
+    // Helper function to check permissions & location state (very important!)
+    private fun hasRequiredPermissions(): Boolean {
+        val hasScanPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED
+        } else {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
+
+        val bluetoothEnabled = controllerManager.adapter.isEnabled
+
+        val locationEnabled = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            val locationMode = android.provider.Settings.Secure.getInt(
+                context.contentResolver,
+                android.provider.Settings.Secure.LOCATION_MODE,
+                android.provider.Settings.Secure.LOCATION_MODE_OFF
+            )
+            locationMode != android.provider.Settings.Secure.LOCATION_MODE_OFF
+        } else true // BLE location check only for API<31
+
+        if (!bluetoothEnabled) {
+            Log.e("BLEScanner", "Bluetooth is disabled on device!")
+        }
+
+        if (!locationEnabled) {
+            Log.e("BLEScanner", "Location (GPS) is disabled on device; required for BLE before Android 12.")
+        }
+
+        if (!hasScanPermission) {
+            Log.e("BLEScanner", "Required permission not granted! BLUETOOTH_SCAN (API 31+) or ACCESS_FINE_LOCATION (<API 31)")
+        }
+
+        return hasScanPermission && bluetoothEnabled && locationEnabled
     }
 }
