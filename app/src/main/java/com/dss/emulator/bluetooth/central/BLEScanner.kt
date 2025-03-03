@@ -11,6 +11,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.dss.emulator.UDBDevice
+import com.dss.emulator.bluetooth.Constants
 
 
 class BLEScanner(
@@ -20,11 +21,6 @@ class BLEScanner(
 ) {
     private val scannedDevices = mutableListOf<UDBDevice>()
     private var isScanning = false
-
-    // Create default scan settings (fast mode)
-    private val scanSettings = ScanSettings.Builder()
-        .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-        .build()
 
     private val scanCallback: ScanCallback = object : ScanCallback() {
         override fun onScanFailed(errorCode: Int) {
@@ -52,10 +48,10 @@ class BLEScanner(
 
     @SuppressLint("MissingPermission")
     fun startScanning() {
-        if (!hasRequiredPermissions()) {
-            Log.e("BLEScanner", "Missing required BLE permissions or location services disabled.")
-            return
-        }
+//        if (!hasRequiredPermissions()) {
+//            Log.e("BLEScanner", "Missing required BLE permissions or location services disabled.")
+//            return
+//        }
 
         if (isScanning) {
             Log.d("BLEScanner", "Scanner already running.")
@@ -69,7 +65,7 @@ class BLEScanner(
         }
 
         scannedDevices.clear()
-        scanner.startScan(listOf(), scanSettings, scanCallback)
+        scanner.startScan(null, Constants.SCAN_SETTINGS, scanCallback)
         isScanning = true
         Log.d("BLEScanner", "BLE scan started successfully.")
     }
