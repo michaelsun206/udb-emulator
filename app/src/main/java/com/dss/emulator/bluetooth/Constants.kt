@@ -1,5 +1,5 @@
 // File: Constants.kt
-package com.dss.emulator.udb
+package com.dss.emulator.bluetooth
 
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings

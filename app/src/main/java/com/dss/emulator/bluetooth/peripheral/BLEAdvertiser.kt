@@ -1,16 +1,17 @@
 // File: BLEAdvertiser.kt
-package com.dss.emulator.udb.bluetooth
+package com.dss.emulator.bluetooth.peripheral
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.AdvertiseCallback
+import android.bluetooth.le.BluetoothLeAdvertiser
 import android.util.Log
-import com.dss.emulator.udb.Constants
+import com.dss.emulator.bluetooth.Constants
+import com.dss.emulator.bluetooth.central.BluetoothControllerManager
 
 class BLEAdvertiser(
-    private val controllerManager: BluetoothControllerManager
+    private val advertiser: BluetoothLeAdvertiser
 ) {
 
-    private val advertiser = controllerManager.adapter.bluetoothLeAdvertiser
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: android.bluetooth.le.AdvertiseSettings) {
             Log.d("BLE Advertiser", "Advertising started successfully")
@@ -23,8 +24,6 @@ class BLEAdvertiser(
 
     @SuppressLint("MissingPermission")
     fun startAdvertising() {
-        controllerManager.adapter.name = Constants.DEVICE_NAME
-
         advertiser.startAdvertising(
             Constants.ADVERTISE_SETTINGS,
             Constants.getAdvertiseData(), advertiseCallback

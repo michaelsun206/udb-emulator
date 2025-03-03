@@ -1,12 +1,14 @@
-package com.dss.emulator.udb.register
+package com.dss.emulator.register
 
-import com.dss.emulator.udb.dsscommand.DSSCommand
-import com.dss.emulator.udb.dsscommand.StandardRequest
+import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.dsscommand.StandardRequest
 
-enum class Direction {
-    UDB_TO_GUI,
-    GUI_TO_UDB,
-    BOTH
+enum class Direction(val description: String) {
+    UDB_TO_GUI("UDB->GUI"),
+    GUI_TO_UDB("GUI->UDB"),
+    BOTH("Both");
+
+    override fun toString(): String = description
 }
 
 // Enum class
@@ -51,6 +53,14 @@ data class Register(
         return when (dataType) {
             DataType.SIGNED_INT32, DataType.UINT32 -> intValue
             DataType.BITMAP_64 -> longValue
+            DataType.STRING -> stringValue
+        }
+    }
+
+    fun getValueString(): String? {
+        return when(dataType) {
+            DataType.SIGNED_INT32, DataType.UINT32 -> "0x" + intValue?.toString(16)
+            DataType.BITMAP_64 -> "0x" + longValue?.toString(16)
             DataType.STRING -> stringValue
         }
     }
@@ -454,7 +464,7 @@ object Registers {
 
     init {
         SN.setValue(0x00000000)
-        FIRMWARE.setValue(0x12300000)
+        FIRMWARE.setValue(0x1231)
         SOUNDSPEED.setValue(0x00000000)
     }
 }

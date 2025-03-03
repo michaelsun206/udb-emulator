@@ -1,4 +1,4 @@
-package com.dss.emulator.udb.dsscommand
+package com.dss.emulator.dsscommand
 
 object CRC16 {
     private const val CRC16_POLY: Int = 0x8408

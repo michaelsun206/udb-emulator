@@ -1,4 +1,4 @@
-package com.dss.emulator.udb.dsscommand
+package com.dss.emulator.dsscommand
 
 enum class StandardRequest(val value: Int) {
     GT(2), // Get Field Request

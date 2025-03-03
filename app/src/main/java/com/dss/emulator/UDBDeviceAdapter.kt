@@ -1,4 +1,4 @@
-package com.dss.emulator.udb
+package com.dss.emulator
 
 import android.view.LayoutInflater
 import android.view.View
@@ -25,8 +25,8 @@ class UDBDeviceAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
-        val view: View = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_device, parent, false)
+        val view: View =
+            LayoutInflater.from(parent.context).inflate(R.layout.item_device, parent, false)
         return DeviceViewHolder(view, onDeviceSelected)
     }
 
@@ -37,14 +37,12 @@ class UDBDeviceAdapter(
     override fun getItemCount(): Int = devices.size
 
     class DeviceViewHolder(
-        itemView: View,
-        private val onDeviceSelected: (UDBDevice) -> Unit
+        itemView: View, private val onDeviceSelected: (UDBDevice) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val deviceName: TextView = itemView.findViewById(R.id.deviceName)
         private val deviceAddress: TextView = itemView.findViewById(R.id.deviceAddress)
         private val deviceRssi: TextView = itemView.findViewById(R.id.deviceRssi)
-
         fun bind(device: UDBDevice) {
             deviceName.text = device.name
             deviceAddress.text = device.address

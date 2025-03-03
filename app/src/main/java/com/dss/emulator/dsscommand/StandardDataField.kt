@@ -1,4 +1,4 @@
-package com.dss.emulator.udb.dsscommand
+package com.dss.emulator.dsscommand
 
 enum class StandardDataField {
     SN,        // Serial Number of device
