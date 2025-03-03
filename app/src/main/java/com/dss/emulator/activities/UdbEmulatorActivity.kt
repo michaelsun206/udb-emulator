@@ -1,8 +1,5 @@
 package com.dss.emulator.activities
 
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.StateListDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -15,34 +12,53 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
+import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
     private lateinit var permissionsManager: BLEPermissionsManager
+    private lateinit var bleCentralController: BLEPeripheralController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_udb_emulator)
 
         initializeUI()
+
+        val statusText = this.findViewById(R.id.statusText) as TextView
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
                 Log.e("Permissions", "Bluetooth permissions denied")
                 // Alert and Exit
-                AlertDialog.Builder(this)
-                    .setTitle("Bluetooth Permissions Denied")
+                AlertDialog.Builder(this).setTitle("Bluetooth Permissions Denied")
                     .setMessage("Please grant Bluetooth permissions to use this app.")
-                    .setPositiveButton("OK") { _, _ -> finish() }
-                    .show()
+                    .setPositiveButton("OK") { _, _ -> finish() }.show()
             } else {
                 // Permissions granted, proceed to initialize UI
             }
         }
 
+        bleCentralController = BLEPeripheralController(this, onDeviceConnected = { device ->
+            if (device == null) {
+                bleCentralController.startAdvertising()
+                statusText.text = "Waiting For Connection..."
+            } else {
+                statusText.text = "Device: ${device.getAddress()}"
+                bleCentralController.stopAdvertising()
+            }
+        })
+        bleCentralController.startAdvertising()
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
     }
 
     private fun initializeUI() {
@@ -62,8 +78,7 @@ class UdbEmulatorActivity : ComponentActivity() {
 
             val noTextView = TextView(this).apply {
                 layoutParams = TableRow.LayoutParams(
-                    40.dpToPx(),
-                    TableRow.LayoutParams.WRAP_CONTENT
+                    40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
                 )
                 gravity = Gravity.CENTER
                 setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
@@ -109,8 +124,7 @@ class UdbEmulatorActivity : ComponentActivity() {
             tableLayout.addView(tableRow)
 
             Log.d(
-                "UdbEmulatorActivity",
-                "Register: ${register.name}, Value: ${register.getValue()}"
+                "UdbEmulatorActivity", "Register: ${register.name}, Value: ${register.getValue()}"
             )
         }
     }
@@ -121,7 +135,6 @@ class UdbEmulatorActivity : ComponentActivity() {
 
     private fun showEditDialog(register: Register, valueTextView: TextView) {
         val builder = AlertDialog.Builder(this)
-//        builder.setTitle("Edit Value for ${register.name}")
 
         // Inflate the custom layout
         val inflater = LayoutInflater.from(this)
@@ -146,7 +159,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         builder.setView(dialogView)
 
         // Set up the buttons
-        builder.setPositiveButton("OK") { dialog, which ->
+        builder.setPositiveButton("OK") { _, _ ->
             val newValue = inputEditText.text.toString()
             // Validate and update the register value
 

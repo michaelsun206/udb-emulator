@@ -1,4 +1,3 @@
-// File: GattServerManager.kt
 package com.dss.emulator.bluetooth.peripheral
 
 import android.annotation.SuppressLint
@@ -8,7 +7,8 @@ import android.util.Log
 import com.dss.emulator.bluetooth.Constants
 
 class GattServerManager(
-    private val context: Context, private val bluetoothManager: BluetoothManager
+    private val context: Context, private val bluetoothManager: BluetoothManager,
+    private val onDeviceConnected: (BluetoothDevice?) -> Unit
 ) {
 
     private var connectedDevice: BluetoothDevice? = null;
@@ -19,13 +19,15 @@ class GattServerManager(
     private val gattServerCallback = object : BluetoothGattServerCallback() {
 
         override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
-            Log.d("GattServer", "Device $device connection state changed: $newState")
+            Log.d("GattServerManager", "Device $device connection state changed: $newState")
 
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                connectedDevice = device
+            connectedDevice = if (newState == BluetoothProfile.STATE_CONNECTED) {
+                device
             } else {
-                connectedDevice = null
+                null
             }
+
+            onDeviceConnected(connectedDevice)
         }
 
         @SuppressLint("MissingPermission")
@@ -69,7 +71,7 @@ class GattServerManager(
             characteristic?.let {
                 if (it.uuid == Constants.COMMAND_WRITE_CHARACTERISTIC_UUID) {
                     val receivedData = String(value ?: byteArrayOf())
-                    Log.d("GattServer", "Received data on Characteristic 2: $receivedData")
+                    Log.d("GattServerManager", "Received data on Characteristic 2: $receivedData")
                     bluetoothGattServer?.sendResponse(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
@@ -111,7 +113,7 @@ class GattServerManager(
             descriptor?.let {
                 if (it.uuid == Constants.CHARACTERISTIC_USER_DESCRIPTION_UUID) {
                     val receivedValue = String(value ?: byteArrayOf())
-                    Log.d("GattServer", "Received value for descriptor: $receivedValue")
+                    Log.d("GattServerManager", "Received value for descriptor: $receivedValue")
                     bluetoothGattServer?.sendResponse(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
@@ -125,16 +127,16 @@ class GattServerManager(
         try {
             bluetoothGattServer = bluetoothManager.openGattServer(context, gattServerCallback)
             bluetoothGattServer?.addService(buildGattService())
-            Log.d("GattServer", "GATT Server started")
+            Log.d("GattServerManager", "GATT Server started")
         } catch (e: Exception) {
-            Log.e("GattServer", "Failed to start GATT server: ${e.message}")
+            Log.e("GattServerManager", "Failed to start GATT server: ${e.message}")
         }
     }
 
     @SuppressLint("MissingPermission")
     fun stopGattServer() {
         bluetoothGattServer?.close()
-        Log.d("GattServer", "GATT Server stopped")
+        Log.d("GattServerManager", "GATT Server stopped")
     }
 
     private fun buildGattService(): BluetoothGattService {

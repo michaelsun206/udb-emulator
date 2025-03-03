@@ -3,6 +3,7 @@ package com.dss.emulator.bluetooth
 
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
+import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import java.util.UUID
@@ -31,15 +32,29 @@ object Constants {
     const val COMMAND_WRITE_DESCRIPTOR: String = "COMMAND_WRITE"
 
     // Required Permissions
-    val REQUIRED_PERMISSIONS: Array<String> = arrayOf(
-        android.Manifest.permission.BLUETOOTH,
-        android.Manifest.permission.BLUETOOTH_ADMIN,
-        android.Manifest.permission.BLUETOOTH_ADVERTISE,
-        android.Manifest.permission.BLUETOOTH_CONNECT,
-        android.Manifest.permission.BLUETOOTH_SCAN,
-        android.Manifest.permission.ACCESS_FINE_LOCATION,
-        android.Manifest.permission.ACCESS_COARSE_LOCATION
-    )
+    val REQUIRED_PERMISSIONS: List<String> = buildRequiredPermissions()
+    private fun buildRequiredPermissions(): List<String> {
+        val permissions = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12 (API 31) and above
+            permissions.add(android.Manifest.permission.BLUETOOTH_SCAN)
+            permissions.add(android.Manifest.permission.BLUETOOTH_CONNECT)
+            permissions.add(android.Manifest.permission.BLUETOOTH_ADVERTISE)
+        } else {
+            // Android versions below 12
+            permissions.add(android.Manifest.permission.BLUETOOTH)
+            permissions.add(android.Manifest.permission.BLUETOOTH_ADMIN)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // Android 10 (API 29) and above
+            permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            permissions.add(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+
+        return permissions
+    }
+
 
     // Advertise Settings
     val ADVERTISE_SETTINGS: AdvertiseSettings = AdvertiseSettings.Builder()

@@ -26,39 +26,31 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 Log.e("Permissions", "Bluetooth permissions denied")
 
                 // Alert and Exit
-                AlertDialog.Builder(this)
-                    .setTitle("Bluetooth Permissions Denied")
+                AlertDialog.Builder(this).setTitle("Bluetooth Permissions Denied")
                     .setMessage("Please grant Bluetooth permissions to use this app.")
                     .setPositiveButton("OK") { _, _ ->
                         finish()
-                    }
-                    .show()
+                    }.show()
             }
         }
 
-        bleCentralController = BLECentralController(
-            context = this,
-            onDeviceFound = { device ->
-                runOnUiThread {
-                    devicesDialog.addDevice(device)
-                }
-            },
-            onDeviceConnected = {
-                runOnUiThread {
-                    devicesDialog.stopScanning()
-                    devicesDialog.dismiss()
-                }
+        bleCentralController = BLECentralController(context = this, onDeviceFound = { device ->
+            runOnUiThread {
+                devicesDialog.addDevice(device)
             }
-        )
+        }, onDeviceConnected = {
+            runOnUiThread {
+                devicesDialog.stopScanning()
+                devicesDialog.dismiss()
+            }
+        })
 
-        devicesDialog = FindDevicesDialog(
-            bleCentralController = bleCentralController!!,
+        devicesDialog = FindDevicesDialog(bleCentralController = bleCentralController!!,
             context = this,
             onDeviceSelected = { device ->
                 Log.d("DeviceSelected", "Selected device: ${device.name} ${device.address}")
                 bleCentralController?.connectToDevice(device)
-            }
-        )
+            })
 
         showDeviceListDialog()
     }
