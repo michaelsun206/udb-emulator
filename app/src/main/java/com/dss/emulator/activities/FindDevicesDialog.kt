@@ -66,8 +66,8 @@ class FindDevicesDialog(
     }
 
     fun startScanning() {
-        bleCentralController.startScanning()
         udbDeviceAdapter.updateDeviceList(emptyList())
+        bleCentralController.startScanning()
     }
 
     fun stopScanning() {

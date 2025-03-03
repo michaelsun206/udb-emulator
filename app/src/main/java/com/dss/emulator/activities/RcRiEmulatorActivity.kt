@@ -36,8 +36,6 @@ class RcRiEmulatorActivity : ComponentActivity() {
             }
         }
 
-        permissionsManager.checkAndRequestPermissions()
-
         bleCentralController = BLECentralController(
             context = this,
             onDeviceFound = { device ->
@@ -82,7 +80,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
 //    }
 
     private fun showDeviceListDialog() {
-        devicesDialog.startScanning()
         devicesDialog.show()
+        permissionsManager.checkAndRequestPermissions()
+        devicesDialog.startScanning()
     }
 }

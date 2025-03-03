@@ -37,7 +37,8 @@ object Constants {
         android.Manifest.permission.BLUETOOTH_ADVERTISE,
         android.Manifest.permission.BLUETOOTH_CONNECT,
         android.Manifest.permission.BLUETOOTH_SCAN,
-        android.Manifest.permission.ACCESS_FINE_LOCATION
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
     )
 
     // Advertise Settings

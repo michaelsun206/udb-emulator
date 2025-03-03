@@ -1,7 +1,6 @@
 package com.dss.emulator.bluetooth
 
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -35,19 +34,6 @@ class BLEPermissionsManager(
     }
 
     private fun buildRequiredPermissions(): List<String> {
-        val permissions = mutableListOf<String>()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions.add(android.Manifest.permission.BLUETOOTH_SCAN)
-            permissions.add(android.Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                permissions.add(android.Manifest.permission.ACCESS_FINE_LOCATION)
-            } else {
-                permissions.add(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-        }
-
-        return permissions
+        return Constants.REQUIRED_PERMISSIONS.toMutableList()
     }
 }
