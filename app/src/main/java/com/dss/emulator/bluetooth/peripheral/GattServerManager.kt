@@ -7,7 +7,8 @@ import android.util.Log
 import com.dss.emulator.bluetooth.Constants
 
 class GattServerManager(
-    private val context: Context, private val bluetoothManager: BluetoothManager,
+    private val context: Context,
+    private val bluetoothManager: BluetoothManager,
     private val onDeviceConnected: (BluetoothDevice?) -> Unit
 ) {
 
@@ -72,9 +73,12 @@ class GattServerManager(
                 if (it.uuid == Constants.COMMAND_WRITE_CHARACTERISTIC_UUID) {
                     val receivedData = String(value ?: byteArrayOf())
                     Log.d("GattServerManager", "Received data on Characteristic 2: $receivedData")
+
                     bluetoothGattServer?.sendResponse(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
+
+                    sendCommand("Received")
                 }
             }
         }
@@ -145,36 +149,53 @@ class GattServerManager(
         )
 
         // Characteristic for data read
-        characteristic1 = BluetoothGattCharacteristic(
+        val dataReadCharacteristic = BluetoothGattCharacteristic(
             Constants.DATA_READ_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_READ or BluetoothGattCharacteristic.PROPERTY_NOTIFY,
             BluetoothGattCharacteristic.PERMISSION_READ
         )
 
-        //add descriptor
-        val descriptor = BluetoothGattDescriptor(
+        // Descriptor for data read characteristic
+        val readDescriptor = BluetoothGattDescriptor(
             Constants.CHARACTERISTIC_USER_DESCRIPTION_UUID, BluetoothGattDescriptor.PERMISSION_READ
         )
-        characteristic1!!.addDescriptor(descriptor);
-        service.addCharacteristic(characteristic1)
+        dataReadCharacteristic.addDescriptor(readDescriptor)
+        service.addCharacteristic(dataReadCharacteristic)
 
         // Characteristic for command write
-        characteristic2 = BluetoothGattCharacteristic(
+        val commandWriteCharacteristic = BluetoothGattCharacteristic(
             Constants.COMMAND_WRITE_CHARACTERISTIC_UUID,
             BluetoothGattCharacteristic.PROPERTY_WRITE,
             BluetoothGattCharacteristic.PERMISSION_WRITE
         )
 
-        characteristic2!!.addDescriptor(descriptor);
-        service.addCharacteristic(characteristic2)
+        // Descriptor for command write characteristic (separate instance)
+        val writeDescriptor = BluetoothGattDescriptor(
+            Constants.CHARACTERISTIC_USER_DESCRIPTION_UUID, BluetoothGattDescriptor.PERMISSION_READ
+        )
+        commandWriteCharacteristic.addDescriptor(writeDescriptor)
+        service.addCharacteristic(commandWriteCharacteristic)
 
         return service
     }
 
-    @SuppressLint("MissingPermission", "NewApi")
-    fun notifyCharacteristic1(value: String) {
-        bluetoothGattServer?.notifyCharacteristicChanged(
-            connectedDevice!!, characteristic1!!, false, value.toByteArray()
-        )
+    @SuppressLint("MissingPermission")
+    fun sendCommand(value: String) {
+        bluetoothGattServer?.let { server ->
+            val characteristic = server.getService(Constants.UDB_SERVICE_UUID)
+                ?.getCharacteristic(Constants.COMMAND_WRITE_CHARACTERISTIC_UUID)
+
+            if (characteristic == null) {
+                Log.e("Bluetooth", "Command Write Characteristic not found")
+                return
+            }
+
+            characteristic.value = value.toByteArray()
+
+            connectedDevice?.let { device ->
+                server.notifyCharacteristicChanged(device, characteristic, false)
+            } ?: Log.e("Bluetooth", "No connected device to notify")
+        }
     }
 }
+

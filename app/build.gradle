@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.dss.emulator.udb'
-    compileSdk 34
+    compileSdk 32
 
     defaultConfig {
         applicationId "com.dss.emulator.udb"
         minSdk 24
-        targetSdk 34
+        targetSdk 32
         versionCode 1
         versionName "1.0"
 

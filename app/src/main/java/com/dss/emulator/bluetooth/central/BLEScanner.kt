@@ -13,7 +13,6 @@ class BLEScanner(
     private val bluetoothManager: BluetoothManager,
     private val onDeviceFound: (UDBDevice) -> Unit
 ) {
-    // Helper function to check permissions & location state (very important!)
     private val scannedDevices = mutableListOf<UDBDevice>()
 
     private var isScanning = false

@@ -21,6 +21,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rc_ri_emulator)
 
+        initializeSendButton()
+
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
                 Log.e("RcRiEmulatorActivity", "Bluetooth permissions denied")
@@ -47,6 +49,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
                     .setMessage("Connected to ${it.name}").setPositiveButton("OK") { _, _ ->
                     }.show()
             }
+        }, onCommandReceived = { command ->
+            runOnUiThread {
+                AlertDialog.Builder(this).setTitle("Command Received")
+                    .setMessage("Command Received: $command").setPositiveButton("OK") { _, _ ->
+                    }.show()
+            }
         })
 
         devicesDialog = FindDevicesDialog(bleCentralController = bleCentralController!!,
@@ -59,25 +67,15 @@ class RcRiEmulatorActivity : ComponentActivity() {
         showDeviceListDialog()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-//        bleCentralController?.stopScanning()
-    }
-
-//    override fun onResume() {
-//        super.onResume()
-//        permissionsManager.checkAndRequestPermissions()
-//        bleCentralController?.startScanning()
-//    }
-//
-//    override fun onPause() {
-//        super.onPause()
-//        bleCentralController?.stopScanning()
-//    }
-
     private fun showDeviceListDialog() {
         devicesDialog.show()
         permissionsManager.checkAndRequestPermissions()
         devicesDialog.startScanning()
+    }
+
+    private fun initializeSendButton() {
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
+            bleCentralController?.sendMessage("Hello From RC!!!")
+        }
     }
 }
