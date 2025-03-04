@@ -1,5 +1,6 @@
 package com.dss.emulator.activities
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -15,6 +16,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
     private var bleCentralController: BLECentralController? = null
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rc_ri_emulator)
@@ -42,6 +44,10 @@ class RcRiEmulatorActivity : ComponentActivity() {
             runOnUiThread {
                 devicesDialog.stopScanning()
                 devicesDialog.dismiss()
+
+                AlertDialog.Builder(this).setTitle("Connected to ${it.name}")
+                    .setMessage("Connected to ${it.name}").setPositiveButton("OK") { _, _ ->
+                    }.show()
             }
         })
 

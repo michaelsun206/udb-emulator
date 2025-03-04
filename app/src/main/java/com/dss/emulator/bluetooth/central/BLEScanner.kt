@@ -4,14 +4,12 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
-import android.content.Context
 import android.util.Log
 import com.dss.emulator.UDBDevice
 import com.dss.emulator.bluetooth.Constants
 
 
 class BLEScanner(
-    private val context: Context,
     private val bluetoothManager: BluetoothManager,
     private val onDeviceFound: (UDBDevice) -> Unit
 ) {

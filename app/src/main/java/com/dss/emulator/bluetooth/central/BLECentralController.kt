@@ -30,14 +30,14 @@ class BLECentralController(
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            if (status == android.bluetooth.BluetoothGatt.GATT_SUCCESS) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
                 val services = gatt.services
                 for (service in services) {
+                    Log.d("BLE Gatt", "Services discovered: ${service.uuid}")
                     if (service.uuid.equals(Constants.UDB_SERVICE_UUID)) {
                         onDeviceConnected(gatt.device)
                     }
                 }
-                Log.d("BLE Gatt", "Services discovered: $services")
             } else {
                 Log.w("BLE Gatt", "onServicesDiscovered received: $status")
             }
@@ -46,9 +46,7 @@ class BLECentralController(
 
     private val scanner: BLEScanner by lazy {
         BLEScanner(
-            context,
-            bluetoothManager = bluetoothManager!!,
-            onDeviceFound
+            bluetoothManager = bluetoothManager!!, onDeviceFound
         )
     }
 
