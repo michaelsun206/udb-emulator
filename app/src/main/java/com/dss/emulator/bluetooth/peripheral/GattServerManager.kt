@@ -183,7 +183,7 @@ class GattServerManager(
     fun sendCommand(value: String) {
         bluetoothGattServer?.let { server ->
             val characteristic = server.getService(Constants.UDB_SERVICE_UUID)
-                ?.getCharacteristic(Constants.COMMAND_WRITE_CHARACTERISTIC_UUID)
+                ?.getCharacteristic(Constants.DATA_READ_CHARACTERISTIC_UUID)
 
             if (characteristic == null) {
                 Log.e("Bluetooth", "Command Write Characteristic not found")

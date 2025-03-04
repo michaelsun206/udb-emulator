@@ -32,24 +32,31 @@ class BLECentralController(
             }
         }
 
+        @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 val services = gatt.services
+
+                var isUDBDevice = false
                 for (service in services) {
-                    Log.d("BLE Gatt", "Services discovered: ${service.uuid}")
                     if (service.uuid.equals(Constants.UDB_SERVICE_UUID)) {
-                        onDeviceConnected(gatt.device)
+                        isUDBDevice = true
+                        val characteristic =
+                            service.getCharacteristic(Constants.DATA_READ_CHARACTERISTIC_UUID)
+                        gatt!!.setCharacteristicNotification(characteristic, true)
                     }
                 }
+                if (isUDBDevice) onDeviceConnected(gatt.device)
+
             } else {
                 Log.w("BLE Gatt", "onServicesDiscovered received: $status")
             }
         }
 
         override fun onCharacteristicChanged(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic
+            gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic
         ) {
+
             when (characteristic.uuid) {
                 Constants.DATA_READ_CHARACTERISTIC_UUID -> {
                     val data = characteristic.value

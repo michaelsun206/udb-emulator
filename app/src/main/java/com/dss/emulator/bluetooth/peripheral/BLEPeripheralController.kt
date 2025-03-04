@@ -7,8 +7,7 @@ import android.content.Context
 import android.util.Log
 
 class BLEPeripheralController(
-    private val context: Context,
-    private val onDeviceConnected: (BluetoothDevice?) -> Unit
+    context: Context, private val onDeviceConnected: (BluetoothDevice?) -> Unit
 ) {
     private val advertiser: BLEAdvertiser by lazy { BLEAdvertiser(bluetoothManager.adapter.bluetoothLeAdvertiser) }
     private var bluetoothManager: BluetoothManager =
@@ -16,35 +15,20 @@ class BLEPeripheralController(
     private val isAdvertising = false
 
     @SuppressLint("MissingPermission")
-    private var gattServerManager: GattServerManager = GattServerManager(
-        context, bluetoothManager,
-        onDeviceConnected = { device ->
+    private var gattServerManager: GattServerManager =
+        GattServerManager(context, bluetoothManager, onDeviceConnected = { device ->
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
-
             onDeviceConnected(device)
-        }
-    )
-
-    init {
-//        gattServerManager.startGattServer()
-    }
+        })
 
     fun startAdvertising() {
         gattServerManager.startGattServer()
-        if (!isAdvertising)
-            advertiser.startAdvertising()
-        else
-            Log.d("BLEPeripheralController", "Advertising is already running")
+        if (!isAdvertising) advertiser.startAdvertising()
+        else Log.d("BLEPeripheralController", "Advertising is already running")
     }
 
     fun stopAdvertising() {
-        if (isAdvertising)
-            advertiser.stopAdvertising()
-        else
-            Log.d("BLEPeripheralController", "Advertising is not running")
-    }
-
-    fun sendNotification(value: String) {
-        gattServerManager.notifyCharacteristic1(value)
+        if (isAdvertising) advertiser.stopAdvertising()
+        else Log.d("BLEPeripheralController", "Advertising is not running")
     }
 }

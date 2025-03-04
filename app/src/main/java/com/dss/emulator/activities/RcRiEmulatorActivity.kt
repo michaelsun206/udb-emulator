@@ -75,7 +75,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
     private fun initializeSendButton() {
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
-            bleCentralController?.sendMessage("Hello From RC!!!")
+            bleCentralController?.sendCommand("Hello From RC!!!")
         }
     }
 }
