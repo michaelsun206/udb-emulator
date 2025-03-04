@@ -43,6 +43,8 @@ class UdbEmulatorActivity : ComponentActivity() {
             }
         }
 
+        permissionsManager.checkAndRequestPermissions()
+
         bleCentralController = BLEPeripheralController(this, onDeviceConnected = { device ->
             if (device == null) {
                 bleCentralController.startAdvertising()
@@ -54,9 +56,9 @@ class UdbEmulatorActivity : ComponentActivity() {
                 bleCentralController.stopAdvertising()
 
                 runOnUiThread {
-                    statusText.text = "Device: ${device.name}"
+                    statusText.text = "Device: ${device.address}"
                     AlertDialog.Builder(this).setTitle("Device Connected")
-                        .setMessage("Device: ${device.name}").setPositiveButton("OK") { _, _ -> }
+                        .setMessage("Device: ${device.address}").setPositiveButton("OK") { _, _ -> }
                         .show()
                 }
             }

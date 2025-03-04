@@ -161,8 +161,8 @@ class GattServerManager(
         // Characteristic for command write
         characteristic2 = BluetoothGattCharacteristic(
             Constants.COMMAND_WRITE_CHARACTERISTIC_UUID,
-            BluetoothGattCharacteristic.PROPERTY_READ or BluetoothGattCharacteristic.PROPERTY_WRITE,
-            BluetoothGattCharacteristic.PERMISSION_READ or BluetoothGattCharacteristic.PERMISSION_WRITE
+            BluetoothGattCharacteristic.PROPERTY_WRITE,
+            BluetoothGattCharacteristic.PERMISSION_WRITE
         )
 
         characteristic2!!.addDescriptor(descriptor);

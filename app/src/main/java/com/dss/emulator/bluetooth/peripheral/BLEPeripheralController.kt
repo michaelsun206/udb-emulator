@@ -26,10 +26,11 @@ class BLEPeripheralController(
     )
 
     init {
-        gattServerManager.startGattServer()
+//        gattServerManager.startGattServer()
     }
 
     fun startAdvertising() {
+        gattServerManager.startGattServer()
         if (!isAdvertising)
             advertiser.startAdvertising()
         else

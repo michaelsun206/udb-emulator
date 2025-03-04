@@ -62,7 +62,7 @@ class BLECentralController(
     fun connectToDevice(device: UDBDevice) {
         val bluetoothDevice = bluetoothManager?.adapter?.getRemoteDevice(device.address)
         bluetoothGatt = bluetoothDevice?.connectGatt(
-            context, true, gattCallback
+            context, false, gattCallback
         )
 
         Log.d("BLECentralController", "Connecting to device: ${device.address}")

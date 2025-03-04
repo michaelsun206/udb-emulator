@@ -22,10 +22,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
         setContentView(R.layout.activity_rc_ri_emulator)
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
-            Log.e("Permissions", "Bluetooth permissions denied")
-
             if (!granted) {
-                Log.e("Permissions", "Bluetooth permissions denied")
+                Log.e("RcRiEmulatorActivity", "Bluetooth permissions denied")
 
                 // Alert and Exit
                 AlertDialog.Builder(this).setTitle("Bluetooth Permissions Denied")
