@@ -1,5 +1,6 @@
 package com.dss.emulator.activities
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -21,6 +22,7 @@ class UdbEmulatorActivity : ComponentActivity() {
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_udb_emulator)
@@ -44,10 +46,19 @@ class UdbEmulatorActivity : ComponentActivity() {
         bleCentralController = BLEPeripheralController(this, onDeviceConnected = { device ->
             if (device == null) {
                 bleCentralController.startAdvertising()
-                statusText.text = "Waiting For Connection..."
+
+                runOnUiThread {
+                    statusText.text = "Waiting For Connection..."
+                }
             } else {
-                statusText.text = "Device: ${device.getAddress()}"
                 bleCentralController.stopAdvertising()
+
+                runOnUiThread {
+                    statusText.text = "Device: ${device.name}"
+                    AlertDialog.Builder(this).setTitle("Device Connected")
+                        .setMessage("Device: ${device.name}").setPositiveButton("OK") { _, _ -> }
+                        .show()
+                }
             }
         })
         bleCentralController.startAdvertising()
