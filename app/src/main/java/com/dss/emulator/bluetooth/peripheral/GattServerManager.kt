@@ -9,7 +9,8 @@ import com.dss.emulator.bluetooth.Constants
 class GattServerManager(
     private val context: Context,
     private val bluetoothManager: BluetoothManager,
-    private val onDeviceConnected: (BluetoothDevice?) -> Unit
+    private val onDeviceConnected: (BluetoothDevice?) -> Unit,
+    private val onCommandReceived: (String) -> Unit
 ) {
 
     private var connectedDevice: BluetoothDevice? = null;
@@ -78,7 +79,7 @@ class GattServerManager(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
 
-                    sendCommand("Received")
+                    onCommandReceived(receivedData)
                 }
             }
         }
@@ -198,4 +199,3 @@ class GattServerManager(
         }
     }
 }
-

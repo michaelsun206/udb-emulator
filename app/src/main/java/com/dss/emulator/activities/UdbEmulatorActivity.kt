@@ -19,6 +19,9 @@ import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
+
+
+    private lateinit var historyTextView: TextView
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController
 
@@ -28,6 +31,8 @@ class UdbEmulatorActivity : ComponentActivity() {
         setContentView(R.layout.activity_udb_emulator)
 
         initializeUI()
+        historyTextView = findViewById(R.id.historyTextView)
+        historyTextView.text = ""
 
         val statusText = this.findViewById(R.id.statusText) as TextView
 
@@ -62,6 +67,9 @@ class UdbEmulatorActivity : ComponentActivity() {
                         .show()
                 }
             }
+        }, onCommandReceived = {
+            onCommandReceived(it)
+            sendCommand("Reply From UDB")
         })
         bleCentralController.startAdvertising()
     }
@@ -191,5 +199,18 @@ class UdbEmulatorActivity : ComponentActivity() {
         // Create and show the dialog
         val dialog = builder.create()
         dialog.show()
+    }
+
+    private fun onCommandReceived(command: String) {
+        runOnUiThread {
+            historyTextView.text = "$command\n${historyTextView.text}"
+        }
+    }
+
+    private fun sendCommand(command: String) {
+        bleCentralController?.sendCommand(command)
+        runOnUiThread {
+            historyTextView.text = "$command\n${historyTextView.text}"
+        }
     }
 }

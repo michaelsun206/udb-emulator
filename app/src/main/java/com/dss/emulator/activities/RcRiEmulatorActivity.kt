@@ -3,6 +3,7 @@ package com.dss.emulator.activities
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
@@ -11,6 +12,7 @@ import com.dss.emulator.udb.R
 
 class RcRiEmulatorActivity : ComponentActivity() {
 
+    private lateinit var historyTextView: TextView
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var devicesDialog: FindDevicesDialog
 
@@ -21,7 +23,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rc_ri_emulator)
 
-        initializeSendButton()
+        historyTextView = findViewById(R.id.historyTextView)
+        historyTextView.text = ""
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
+            sendCommand("Hello from RC-RI Emulator")
+        }
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
@@ -49,12 +56,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
                     .setMessage("Connected to ${it.name}").setPositiveButton("OK") { _, _ ->
                     }.show()
             }
-        }, onCommandReceived = { command ->
-            runOnUiThread {
-                AlertDialog.Builder(this).setTitle("Command Received")
-                    .setMessage("Command Received: $command").setPositiveButton("OK") { _, _ ->
-                    }.show()
-            }
+        }, onCommandReceived = {
+            onCommandReceived(it)
         })
 
         devicesDialog = FindDevicesDialog(bleCentralController = bleCentralController!!,
@@ -73,9 +76,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
         devicesDialog.startScanning()
     }
 
-    private fun initializeSendButton() {
-        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
-            bleCentralController?.sendCommand("Hello From RC!!!")
-        }
+    private fun sendCommand(command: String) {
+        historyTextView.text = "$command\n${historyTextView.text}"
+        bleCentralController?.sendCommand(command)
+    }
+
+    private fun onCommandReceived(command: String) {
+        historyTextView.text = "$command\n${historyTextView.text}"
     }
 }

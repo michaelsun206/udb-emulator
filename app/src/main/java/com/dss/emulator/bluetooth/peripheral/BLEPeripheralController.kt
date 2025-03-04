@@ -7,7 +7,9 @@ import android.content.Context
 import android.util.Log
 
 class BLEPeripheralController(
-    context: Context, private val onDeviceConnected: (BluetoothDevice?) -> Unit
+    context: Context,
+    private val onDeviceConnected: (BluetoothDevice?) -> Unit,
+    private val onCommandReceived: (String) -> Unit
 ) {
     private val advertiser: BLEAdvertiser by lazy { BLEAdvertiser(bluetoothManager.adapter.bluetoothLeAdvertiser) }
     private var bluetoothManager: BluetoothManager =
@@ -19,6 +21,8 @@ class BLEPeripheralController(
         GattServerManager(context, bluetoothManager, onDeviceConnected = { device ->
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
             onDeviceConnected(device)
+        }, onCommandReceived = { command ->
+            Log.d("BLEPeripheralController", "Command received: $command")
         })
 
     fun startAdvertising() {
@@ -30,5 +34,9 @@ class BLEPeripheralController(
     fun stopAdvertising() {
         if (isAdvertising) advertiser.stopAdvertising()
         else Log.d("BLEPeripheralController", "Advertising is not running")
+    }
+
+    fun sendCommand(command: String) {
+        gattServerManager.sendCommand(command)
     }
 }
