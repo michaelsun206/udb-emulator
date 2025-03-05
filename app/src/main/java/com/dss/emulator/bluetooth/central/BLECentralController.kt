@@ -32,6 +32,15 @@ class BLECentralController(
             }
         }
 
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("BLE Gatt", "MTU changed to $mtu")
+            } else {
+                Log.e("BLE Gatt", "MTU change failed with status $status")
+            }
+        }
+
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -46,7 +55,10 @@ class BLECentralController(
                         gatt!!.setCharacteristicNotification(characteristic, true)
                     }
                 }
-                if (isUDBDevice) onDeviceConnected(gatt.device)
+                if (isUDBDevice) {
+                    gatt.requestMtu(512)
+                    onDeviceConnected(gatt.device)
+                }
 
             } else {
                 Log.w("BLE Gatt", "onServicesDiscovered received: $status")

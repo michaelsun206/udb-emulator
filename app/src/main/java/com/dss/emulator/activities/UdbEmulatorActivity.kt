@@ -211,7 +211,7 @@ class UdbEmulatorActivity : ComponentActivity() {
 
     private fun onCommandReceived(command: String) {
         runOnUiThread {
-            historyTextView.text = "$command\n${historyTextView.text}"
+            historyTextView.text = "<< $command\n${historyTextView.text}"
         }
     }
 
@@ -219,7 +219,7 @@ class UdbEmulatorActivity : ComponentActivity() {
     private fun sendCommand(command: String) {
         bleCentralController?.sendCommand(command)
         runOnUiThread {
-            historyTextView.text = "$command\n${historyTextView.text}"
+            historyTextView.text = ">> $command\n${historyTextView.text}"
         }
     }
 }
