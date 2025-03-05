@@ -14,7 +14,10 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
+import com.dss.emulator.dsscommand.DSSCommand
 import com.dss.emulator.register.Register
+import com.dss.emulator.register.handleCommand
+import com.dss.emulator.register.parseFactoryTestCommand
 import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
@@ -69,7 +72,12 @@ class UdbEmulatorActivity : ComponentActivity() {
             }
         }, onCommandReceived = {
             onCommandReceived(it)
-            sendCommand("Reply From UDB")
+            try {
+                sendCommand(handleCommand(DSSCommand(it)).commandText)
+            } catch (e: Exception) {
+                Log.e("UdbEmulatorActivity", "Error handling command: ${e.message}")
+                sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
+            }
         })
         bleCentralController.startAdvertising()
     }
@@ -206,6 +214,7 @@ class UdbEmulatorActivity : ComponentActivity() {
             historyTextView.text = "$command\n${historyTextView.text}"
         }
     }
+
 
     private fun sendCommand(command: String) {
         bleCentralController?.sendCommand(command)

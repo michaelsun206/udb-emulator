@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.central.BLECentralController
+import com.dss.emulator.dsscommand.DSSCommand
 import com.dss.emulator.udb.R
 
 class RcRiEmulatorActivity : ComponentActivity() {
@@ -29,6 +30,19 @@ class RcRiEmulatorActivity : ComponentActivity() {
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
             sendCommand("Hello from RC-RI Emulator")
         }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandRBButton).setOnClickListener {
+            sendCommand(DSSCommand.createRebootCommand("RC-RI", "UDB").commandText)
+        }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandFTButton).setOnClickListener {
+            sendCommand(DSSCommand.createRebootCommand("RC-RI", "UDB").commandText)
+        }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandGIButton).setOnClickListener {
+            sendCommand(DSSCommand.createRebootCommand("RC-RI", "UDB").commandText)
+        }
+
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
