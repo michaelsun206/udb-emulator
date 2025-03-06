@@ -17,7 +17,6 @@ import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.handleCommand
-import com.dss.emulator.register.parseFactoryTestCommand
 import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
@@ -33,7 +32,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_udb_emulator)
 
-        initializeUI()
+        initializeRegisterTable()
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
 
@@ -90,7 +89,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         super.onPause()
     }
 
-    private fun initializeUI() {
+    private fun initializeRegisterTable() {
         val tableLayout = findViewById<TableLayout>(R.id.tableData)
 
         // Clear existing rows except for the header

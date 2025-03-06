@@ -615,7 +615,7 @@ fun parseRegisterMapChangeReportCommand(command: DSSCommand) {
 
     for (register in registerList) {
         if ((1L shl register.regMapBit) and registerMapBit != 0L) {
-            DSSCommand.createGetFieldCommand(command.destination, command.source, register.name)
+            DSSCommand.createGTCommand(command.destination, command.source, register.name)
         }
     }
 }
