@@ -1,5 +1,7 @@
 package com.dss.emulator.dsscommand
 
+import android.util.Log
+
 data class DSSCommand(
     var source: String = "",
     var destination: String = "",
@@ -12,15 +14,15 @@ data class DSSCommand(
     companion object {
         // Maximum constraints as constants
         private const val MAX_DATA_POINTS = 3
-        private const val MAX_ID_WIDTH = 4
+        private const val MAX_ID_WIDTH = 10
         private const val MAX_DATA_FIELD_WIDTH = 100
         private const val COMMAND_WIDTH = 2
         private const val MAX_CHECKSUM_WIDTH = 9
 
         // Regex Components
         private const val REGEX_START_PART = "\\$"
-        private const val REGEX_DESTINATION_PART = "(?<Destination>((\\d{1,$MAX_ID_WIDTH})|B))"
-        private const val REGEX_SOURCE_PART = "(?<Source>(\\d{1,$MAX_ID_WIDTH}))"
+        private const val REGEX_DESTINATION_PART = "(?<Destination>[\\w-]{1,$MAX_ID_WIDTH})"
+        private const val REGEX_SOURCE_PART = "(?<Source>[\\w-]{1,$MAX_ID_WIDTH})"
         private const val REGEX_COMMAND_PART = "(?<Command>([A-Z]{$COMMAND_WIDTH}))"
         private const val REGEX_DATA_PART =
             """(?:,(?<Data>(?:[^*,]{0,$MAX_DATA_FIELD_WIDTH})(?:,|)){0,$MAX_DATA_POINTS})?"""
@@ -175,9 +177,9 @@ data class DSSCommand(
     // Computed Checksum using CRC16
     private val computedChecksum: String
         get() = CRC16.compute(buildString {
-            append("$\${destination},\${source},\${command}")
-            data.forEach { datum ->
-                append(",$datum")
+            append("$${destination},${source},${command}")
+            if (data.isNotEmpty()) {
+                append(",${data.joinToString(",")}")
             }
             append(",")
         }).toString()
@@ -185,11 +187,11 @@ data class DSSCommand(
     // Command Text with End
     val commandText: String
         get() = buildString {
-            append("$\${destination},\${source},\${command}")
+            append("$${destination},${source},${command}")
             if (data.isNotEmpty()) {
                 append(",${data.joinToString(",")}")
             }
-            append(",*\${checksum}\r\n")
+            append(",*${computedChecksum}\r\n")
         }
 
     // Command Text without End
@@ -225,6 +227,9 @@ data class DSSCommand(
 
     // Secondary Constructor from Sentence String
     constructor(sentence: String) : this() {
+        Log.d("DSSCommand", "Sentence: $sentence")
+        Log.d("DSSCommand", "Match: ${COMMAND_REGEX_NO_END}")
+
         val match = COMMAND_REGEX.matchEntire(sentence) ?: COMMAND_REGEX_NO_END.find(sentence)
         ?: throw IllegalArgumentException("Invalid Sentence")
         source = match.groups["Source"]?.value ?: ""
