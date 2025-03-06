@@ -210,7 +210,11 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 register.setValueString(newValue)
                 // Update the TextView
                 valueTextView.text = register.getValueString() ?: "null"
-                sendCommand(DSSCommand.createSTCommand("RC-RI", "UDB", register.name, register.getValueString() ?: "").commandText);
+                sendCommand(
+                    DSSCommand.createSTCommand(
+                        "RC-RI", "UDB", register.name, register.getValue().toString()
+                    ).commandText
+                );
             } catch (e: Exception) {
                 Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()
             }

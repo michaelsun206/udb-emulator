@@ -12,18 +12,17 @@ data class DSSCommand(
     companion object {
         // Maximum constraints as constants
         private const val MAX_DATA_POINTS = 3
-        private const val MAX_ID_WIDTH = 4
+        private const val MAX_ID_WIDTH = 10
         private const val MAX_DATA_FIELD_WIDTH = 100
         private const val COMMAND_WIDTH = 2
         private const val MAX_CHECKSUM_WIDTH = 9
 
         // Regex Components
         private const val REGEX_START_PART = "\\$"
-        private const val REGEX_DESTINATION_PART = "(?<Destination>((\\d{1,$MAX_ID_WIDTH})|B))"
-        private const val REGEX_SOURCE_PART = "(?<Source>(\\d{1,$MAX_ID_WIDTH}))"
+        private const val REGEX_DESTINATION_PART = "(?<Destination>[\\w-]{1,$MAX_ID_WIDTH})"
+        private const val REGEX_SOURCE_PART = "(?<Source>[\\w-]{1,$MAX_ID_WIDTH})"
         private const val REGEX_COMMAND_PART = "(?<Command>([A-Z]{$COMMAND_WIDTH}))"
-        private const val REGEX_DATA_PART =
-            """(?:,(?<Data>(?:[^*,]{0,$MAX_DATA_FIELD_WIDTH})(?:,|)){0,$MAX_DATA_POINTS})?"""
+        private const val REGEX_DATA_PART = """(?:,(?<Data>(?:[^*,]+(?:,[^*,]*)*)?))?"""
         private const val REGEX_CHECKSUM_PART = """(?:,\*(?<Checksum>\d{1,$MAX_CHECKSUM_WIDTH}))?"""
         private const val REGEX_END_PART = "[\r][\n]"
 
@@ -146,7 +145,16 @@ data class DSSCommand(
 
     // Computed Checksum using CRC16
     private val computedChecksum: String
-        get() = CRC16.compute(commandTextNoEnd).toString()
+        get() = CRC16.compute(commandTextBeforeCheckSum).toString()
+
+
+    private val commandTextBeforeCheckSum: String
+        get() = buildString {
+            append("$${destination},${source},${command}")
+            if (data.isNotEmpty()) {
+                append(",${data.joinToString(",")}")
+            }
+        }
 
     // Command Text with End
     val commandText: String
@@ -157,11 +165,7 @@ data class DSSCommand(
     // Command Text without End
     private val commandTextNoEnd: String
         get() = buildString {
-            append("$${destination},${source},${command}")
-            if (data.isNotEmpty()) {
-                append(",${data.joinToString(",")}")
-            }
-            append(",*${checksum}")
+            append("${commandTextBeforeCheckSum},*${computedChecksum}")
         }
 
     // Checksum Validation
