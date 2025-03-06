@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.dsscommand.StandardRequest
 import com.dss.emulator.dsscommand.StandardResponse
 import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
@@ -89,11 +90,28 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 try {
                     val register = registerMap[command.data[0]]
                     register?.setValueString(command.data[1])
+                    runOnUiThread {
+                        initializeRegisterTable()
+                    }
                 } catch (e: Exception) {
                     Log.e("RcRiEmulatorActivity", "Error setting register value: ${e.message}")
-                    Toast.makeText(
-                        this, "Error setting register value: ${e.message}", Toast.LENGTH_SHORT
-                    ).show()
+                    runOnUiThread {
+                        Toast.makeText(
+                            this, "Error setting register value: ${e.message}", Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } else if (command.command == StandardRequest.RM.toString()) {
+                command.data[0].toLong().let {
+                    for (register in registerList) {
+                        if (it and (1L shl register.regMapBit) != 0L) {
+                            sendCommand(
+                                DSSCommand.createGTCommand(
+                                    "RC-RI", "UDB", register.name
+                                ).commandText
+                            )
+                        }
+                    }
                 }
             }
             onCommandReceived(it)
@@ -116,12 +134,16 @@ class RcRiEmulatorActivity : ComponentActivity() {
     }
 
     private fun sendCommand(command: String) {
-        historyTextView.text = ">> $command\n${historyTextView.text}"
+        runOnUiThread {
+            historyTextView.text = ">> $command\n${historyTextView.text}"
+        }
         bleCentralController?.sendCommand(command)
     }
 
     private fun onCommandReceived(command: String) {
-        historyTextView.text = "<< $command\n${historyTextView.text}"
+        runOnUiThread {
+            historyTextView.text = ">> $command\n${historyTextView.text}"
+        }
     }
 
     private fun initializeRegisterTable() {
@@ -164,7 +186,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
                 // Set OnClickListener on the valueTextView
                 setOnClickListener {
-                    if (register.direction == Direction.GUI_TO_UDB && register.direction == Direction.BOTH) showEditDialog(
+                    if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) showEditDialog(
                         register, this
                     ) else {
                         sendCommand(

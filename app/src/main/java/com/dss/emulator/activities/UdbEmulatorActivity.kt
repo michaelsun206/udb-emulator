@@ -15,11 +15,13 @@ import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.dsscommand.StandardRequest
 import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.Registers
 import com.dss.emulator.register.handleCommand
 import com.dss.emulator.register.registerList
+import com.dss.emulator.register.registerMap
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
@@ -78,6 +80,17 @@ class UdbEmulatorActivity : ComponentActivity() {
                 if (!command.isChecksumValid) {
                     sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
                 } else sendCommand(handleCommand(command).commandText)
+
+                if(command.command == StandardRequest.ST.toString()) {
+                    val command = DSSCommand(it)
+                    val register = registerMap[command.data[0]]
+                    val value = command.data[1]
+                    register?.setValueString(value)
+
+                    runOnUiThread {
+                        initializeRegisterTable()
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("UdbEmulatorActivity", "Error handling command: ${e.message}")
                 sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
