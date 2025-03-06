@@ -72,7 +72,10 @@ class UdbEmulatorActivity : ComponentActivity() {
         }, onCommandReceived = {
             onCommandReceived(it)
             try {
-                sendCommand(handleCommand(DSSCommand(it)).commandText)
+                val command = DSSCommand(it)
+                if (!command.isChecksumValid) {
+                    sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
+                } else sendCommand(handleCommand(command).commandText)
             } catch (e: Exception) {
                 Log.e("UdbEmulatorActivity", "Error handling command: ${e.message}")
                 sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
