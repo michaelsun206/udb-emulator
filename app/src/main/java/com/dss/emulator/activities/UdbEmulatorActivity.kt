@@ -15,7 +15,9 @@ import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
+import com.dss.emulator.register.Registers
 import com.dss.emulator.register.handleCommand
 import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
@@ -97,9 +99,7 @@ class UdbEmulatorActivity : ComponentActivity() {
 
         // Clear existing rows except for the header
         val childCount = tableLayout.childCount
-        if (childCount > 0) {
-            tableLayout.removeViews(0, childCount - 1)
-        }
+        if (childCount > 0) tableLayout.removeViews(0, childCount)
 
         Log.d("UdbEmulatorActivity", "Register List Size: ${registerList.size}")
 
@@ -134,7 +134,17 @@ class UdbEmulatorActivity : ComponentActivity() {
 
                 // Set OnClickListener on the valueTextView
                 setOnClickListener {
-                    showEditDialog(register, this)
+                    if (register.direction == Direction.BOTH || register.direction == Direction.UDB_TO_GUI) {
+                        showEditDialog(
+                            register, this
+                        )
+                    } else {
+                        Toast.makeText(
+                            this@UdbEmulatorActivity,
+                            "${register.name} is not editable",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
 
@@ -198,6 +208,17 @@ class UdbEmulatorActivity : ComponentActivity() {
                 register.setValueString(newValue)
                 // Update the TextView
                 valueTextView.text = register.getValueString() ?: "null"
+
+                Log.d(
+                    "UdbEmulatorActivity",
+                    "Register: ${register.name}, Value: ${register.getValue()}"
+                )
+                val rMap = 1L shl register.regMapBit
+
+                Registers.REG_MAP.setValue(rMap)
+                sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap).commandText)
+
+                initializeRegisterTable()
             } catch (e: Exception) {
                 Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()
             }

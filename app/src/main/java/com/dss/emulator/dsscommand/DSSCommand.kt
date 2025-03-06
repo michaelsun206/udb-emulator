@@ -108,6 +108,15 @@ data class DSSCommand(
             )
         }
 
+        fun createRMCommand(source: String, destination: String, registerMap: Long): DSSCommand {
+            return DSSCommand(
+                source = source,
+                destination = destination,
+                command = StandardRequest.RM.name,
+                data = arrayListOf(registerMap.toString())
+            )
+        }
+
         fun createOKResponse(source: String, destination: String): DSSCommand {
             return DSSCommand(
                 source = source, destination = destination, command = StandardResponse.OK.name

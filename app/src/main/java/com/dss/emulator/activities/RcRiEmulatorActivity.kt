@@ -15,8 +15,11 @@ import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.dsscommand.StandardResponse
+import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.registerList
+import com.dss.emulator.register.registerMap
 import com.dss.emulator.udb.R
 
 class RcRiEmulatorActivity : ComponentActivity() {
@@ -80,6 +83,19 @@ class RcRiEmulatorActivity : ComponentActivity() {
                     }.show()
             }
         }, onCommandReceived = {
+            val command = DSSCommand(it)
+            Log.d("RcRiEmulatorActivity", "Received command: $command")
+            if (command.command == StandardResponse.RT.toString()) {
+                try {
+                    val register = registerMap[command.data[0]]
+                    register?.setValueString(command.data[1])
+                } catch (e: Exception) {
+                    Log.e("RcRiEmulatorActivity", "Error setting register value: ${e.message}")
+                    Toast.makeText(
+                        this, "Error setting register value: ${e.message}", Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
             onCommandReceived(it)
         })
 
@@ -113,9 +129,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
         // Clear existing rows except for the header
         val childCount = tableLayout.childCount
-        if (childCount > 0) {
-            tableLayout.removeViews(0, childCount - 1)
-        }
+        if (childCount > 0) tableLayout.removeViews(0, childCount)
 
         Log.d("RcRiEmulatorActivity", "Register List Size: ${registerList.size}")
 
@@ -150,7 +164,15 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
                 // Set OnClickListener on the valueTextView
                 setOnClickListener {
-                    showEditDialog(register, this)
+                    if (register.direction == Direction.GUI_TO_UDB && register.direction == Direction.BOTH) showEditDialog(
+                        register, this
+                    ) else {
+                        sendCommand(
+                            DSSCommand.createGTCommand(
+                                "RC-RI", "UDB", register.name
+                            ).commandText
+                        )
+                    }
                 }
             }
 
