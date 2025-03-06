@@ -35,20 +35,18 @@ data class DSSCommand(
             "$REGEX_START_PART$REGEX_DESTINATION_PART,$REGEX_SOURCE_PART,$REGEX_COMMAND_PART$REGEX_DATA_PART$REGEX_CHECKSUM_PART"
         )
 
-        fun createGTCommand(
-            source: String, destination: String, field: String
-        ): DSSCommand {
-            val args = listOf(field)
-            return DSSCommand(
-                source = source,
-                destination = destination,
-                command = StandardRequest.GT.name,
-                data = args
-            )
-        }
+        // Keys for Special Constructors
+        private const val DESTINATION_KEY = "Destination"
+        private const val SOURCE_KEY = "Source"
+        private const val COMMAND_KEY = "Command"
+        private const val CHECKSUM_KEY = "Checksum"
+        private const val DATA_FIELD_KEY_PREFIX = "Data_"
 
-        fun createSTCommand(
-            source: String, destination: String, field: String, data: String
+        fun createSetFieldCommand(
+            source: String,
+            destination: String,
+            field: String,
+            vararg data: String
         ): DSSCommand {
             val args = listOf(field) + data
             return DSSCommand(
@@ -59,8 +57,12 @@ data class DSSCommand(
             )
         }
 
-        fun createSPCommand(
-            source: String, destination: String, password: String, field: String, data: String
+        fun createSetProtectedFieldCommand(
+            source: String,
+            destination: String,
+            field: String,
+            password: String,
+            vararg data: String
         ): DSSCommand {
             val args = listOf(password, field) + data
             return DSSCommand(
@@ -71,52 +73,74 @@ data class DSSCommand(
             )
         }
 
-        fun createGICommand(
-            source: String, destination: String
+        fun createSetProtectedFieldCommand(
+            source: String,
+            destination: String,
+            field: StandardDataField,
+            password: String,
+            vararg data: String
         ): DSSCommand {
-            return DSSCommand(
-                source = source,
-                destination = destination,
-                command = StandardRequest.GI.name,
+            return createSetProtectedFieldCommand(
+                source,
+                destination,
+                field.name,
+                password,
+                *data
             )
         }
 
-        fun createSICommand(
-            source: String, destination: String, password: String, newSN: String
+        fun createGetFieldCommand(
+            source: String,
+            destination: String,
+            field: StandardDataField
         ): DSSCommand {
-            val args = listOf(password, newSN)
+            return createGetFieldCommand(source, destination, field.name)
+        }
+
+        fun createGetFieldCommand(
+            source: String,
+            destination: String,
+            field: String,
+            vararg data: String = emptyArray()
+        ): DSSCommand {
+            val args = listOf(field) + data
             return DSSCommand(
                 source = source,
                 destination = destination,
-                command = StandardRequest.SI.name,
+                command = StandardRequest.GT.name,
                 data = args
             )
         }
 
-        fun createFTCommand(
-            source: String, destination: String,
-        ): DSSCommand {
+        fun createBroadcastGetIDCommand(source: String): DSSCommand {
             return DSSCommand(
                 source = source,
-                destination = destination,
-                command = StandardRequest.FT.name,
+                destination = "B",
+                command = StandardRequest.GI.name
             )
         }
 
-        fun createRBCommand(source: String, destination: String): DSSCommand {
+        fun createRebootCommand(source: String, destination: String): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = "RB"
+                source = source,
+                destination = destination,
+                command = "RB"
             )
         }
 
         fun createOKResponse(source: String, destination: String): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = StandardResponse.OK.name
+                source = source,
+                destination = destination,
+                command = StandardResponse.OK.name
             )
         }
 
         fun createRTResponse(
-            source: String, destination: String, registerName: String, registerVaule: String
+            source: String,
+            destination: String,
+            registerName: String,
+            registerVaule: String
         ): DSSCommand {
             return DSSCommand(
                 source = source,
@@ -127,7 +151,9 @@ data class DSSCommand(
         }
 
         fun createIDResponse(
-            source: String, destination: String, serialNumber: String
+            source: String,
+            destination: String,
+            serialNumber: String
         ): DSSCommand {
             return DSSCommand(
                 source = source,
@@ -139,14 +165,22 @@ data class DSSCommand(
 
         fun createNOResponse(source: String, destination: String): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = StandardResponse.NO.name
+                source = source,
+                destination = destination,
+                command = StandardResponse.NO.name
             )
         }
     }
 
     // Computed Checksum using CRC16
     private val computedChecksum: String
-        get() = CRC16.compute(commandTextNoEnd).toString()
+        get() = CRC16.compute(buildString {
+            append("$\${destination},\${source},\${command}")
+            data.forEach { datum ->
+                append(",$datum")
+            }
+            append(",")
+        }).toString()
 
     // Command Text with End
     val commandText: String
@@ -159,7 +193,7 @@ data class DSSCommand(
         }
 
     // Command Text without End
-    private val commandTextNoEnd: String
+    val commandTextNoEnd: String
         get() = buildString {
             append("$\${destination},\${source},\${command}")
             if (data.isNotEmpty()) {
@@ -171,6 +205,23 @@ data class DSSCommand(
     // Checksum Validation
     val isChecksumValid: Boolean
         get() = checksum == computedChecksum
+
+    // Secondary Constructor from Map
+    constructor(result: Map<String, String>) : this(
+        source = result[SOURCE_KEY] ?: "",
+        destination = result[DESTINATION_KEY] ?: "",
+        command = result[COMMAND_KEY] ?: "",
+        data = result.keys
+            .filter { it.startsWith(DATA_FIELD_KEY_PREFIX) }
+            .mapNotNull { key ->
+                key.removePrefix(DATA_FIELD_KEY_PREFIX).toIntOrNull()?.let { index ->
+                    result["$DATA_FIELD_KEY_PREFIX$index"]
+                }
+            }
+            .sortedBy { it } // Ensure data is sorted if necessary
+            .filter { it.isNotEmpty() },
+        checksum = result[CHECKSUM_KEY] ?: ""
+    )
 
     // Secondary Constructor from Sentence String
     constructor(sentence: String) : this() {

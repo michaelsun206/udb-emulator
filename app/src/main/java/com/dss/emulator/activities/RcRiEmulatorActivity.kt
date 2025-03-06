@@ -36,7 +36,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
         historyTextView.text = ""
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
-            sendCommand("Hello from RC-RI Emulator")
+            sendCommand("Hello from RC/RI Emulator")
         }
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandRBButton).setOnClickListener {
@@ -100,12 +100,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
     }
 
     private fun sendCommand(command: String) {
-        historyTextView.text = "$command\n${historyTextView.text}"
+        historyTextView.text = ">> $command\n${historyTextView.text}"
         bleCentralController?.sendCommand(command)
     }
 
     private fun onCommandReceived(command: String) {
-        historyTextView.text = "$command\n${historyTextView.text}"
+        historyTextView.text = "<< $command\n${historyTextView.text}"
     }
 
     private fun initializeRegisterTable() {

@@ -22,6 +22,7 @@ class BLEPeripheralController(
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
             onDeviceConnected(device)
         }, onCommandReceived = { command ->
+            onCommandReceived(command)
             Log.d("BLEPeripheralController", "Command received: $command")
         })
 
