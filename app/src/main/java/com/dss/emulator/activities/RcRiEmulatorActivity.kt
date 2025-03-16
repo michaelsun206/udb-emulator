@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -37,6 +40,21 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
+
+        val toggleButton = findViewById<Button>(R.id.toggleButton)
+        val tableContainer = findViewById<LinearLayout>(R.id.tableContainer)
+        var isExpanded = false
+
+        toggleButton.setOnClickListener {
+            if (isExpanded) {
+                tableContainer.visibility = View.GONE
+                toggleButton.text = "Show Registers"
+            } else {
+                tableContainer.visibility = View.VISIBLE
+                toggleButton.text = "Hide Registers"
+            }
+            isExpanded = !isExpanded
+        }
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
 //            sendCommand("Hello from RC/RI Emulator")
@@ -92,7 +110,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
             }
         })
 
-        rcriEmulator = RCRIEmulator(bleCentralController)
+        rcriEmulator = RCRIEmulator(this, bleCentralController)
 
         devicesDialog = FindDevicesDialog(bleCentralController = bleCentralController!!,
             context = this,

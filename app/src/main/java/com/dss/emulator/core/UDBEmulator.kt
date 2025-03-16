@@ -1,5 +1,6 @@
 package com.dss.emulator.core
 
+import android.content.Context
 import android.util.Log
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
@@ -18,7 +19,7 @@ class UDBEmulator : IEmulator {
 
     private val blePeripheralController: BLEPeripheralController;
 
-    constructor(blePeripheralController: BLEPeripheralController) {
+    constructor(context: Context, blePeripheralController: BLEPeripheralController) : super(context) {
         this.blePeripheralController = blePeripheralController
         this.setSource("UDB")
         this.setDestination("RC-RI")

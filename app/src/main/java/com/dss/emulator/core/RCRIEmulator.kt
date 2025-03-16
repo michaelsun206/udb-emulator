@@ -1,5 +1,6 @@
 package com.dss.emulator.core
 
+import android.content.Context
 import android.util.Log
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
@@ -17,7 +18,7 @@ class RCRIEmulator : IEmulator {
 
     private val bleCentralController: BLECentralController;
 
-    constructor(bleCentralController: BLECentralController) {
+    constructor(context: Context, bleCentralController: BLECentralController) : super(context) {
         this.bleCentralController = bleCentralController
         this.setSource("RC-RI")
         this.setDestination("UDB")

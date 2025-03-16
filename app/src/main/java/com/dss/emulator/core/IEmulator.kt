@@ -1,12 +1,19 @@
 package com.dss.emulator.core
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import com.dss.emulator.dsscommand.DSSCommand
 
 abstract class IEmulator {
     private var commandHistory = ""
     private var source = ""
     private var destination = ""
+    private lateinit var context: Context;
+
+    constructor(context: Context) {
+        this.context = context
+    }
 
     abstract fun sendData(data: ByteArray)
     abstract fun parseDollarCommand(command: DSSCommand)
@@ -18,6 +25,8 @@ abstract class IEmulator {
         sendData(command.commandText.toByteArray())
 
         commandHistory = "<< " + command.commandText + commandHistory
+
+        Toast.makeText(context, "<< " + command.commandText, Toast.LENGTH_SHORT).show()
     }
 
     fun getCommandHistory(): String {
@@ -52,6 +61,8 @@ abstract class IEmulator {
         if (data.size > 1) {
             if (data[0].toCharCompat() == '$') {
                 commandHistory = ">> " + String(data) + commandHistory
+
+                Toast.makeText(context, ">> " + String(data) , Toast.LENGTH_SHORT).show()
 
                 try {
                     val command = DSSCommand(String(data))

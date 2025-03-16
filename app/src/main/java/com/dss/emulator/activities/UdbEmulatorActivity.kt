@@ -5,7 +5,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -38,6 +41,22 @@ class UdbEmulatorActivity : ComponentActivity() {
         updateRegisterTable()
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
+
+        val toggleButton = findViewById<Button>(R.id.toggleButton)
+        val tableContainer = findViewById<LinearLayout>(R.id.tableContainer)
+
+        var isExpanded = false
+
+        toggleButton.setOnClickListener {
+            if (isExpanded) {
+                tableContainer.visibility = View.GONE
+                toggleButton.text = "Show Registers"
+            } else {
+                tableContainer.visibility = View.VISIBLE
+                toggleButton.text = "Hide Registers"
+            }
+            isExpanded = !isExpanded
+        }
 
         val statusText = this.findViewById(R.id.statusText) as TextView
 
@@ -82,7 +101,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         })
         bleCentralController.startAdvertising()
 
-        udbEmulator = UDBEmulator(bleCentralController)
+        udbEmulator = UDBEmulator(this, bleCentralController)
     }
 
     override fun onResume() {
