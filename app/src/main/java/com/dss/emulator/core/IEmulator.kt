@@ -13,9 +13,11 @@ abstract class IEmulator {
     abstract fun parseBinaryCommand(date: ByteArray)
 
     fun sendCommand(command: DSSCommand) {
+        command.source = this.getSource()
+        command.destination = this.getDestination()
         sendData(command.commandText.toByteArray())
 
-        commandHistory += command.commandText + "\n"
+        commandHistory = "<< " + command.commandText + commandHistory
     }
 
     fun getCommandHistory(): String {
@@ -49,7 +51,7 @@ abstract class IEmulator {
 
         if (data.size > 1) {
             if (data[0].toCharCompat() == '$') {
-                commandHistory += String(data) + "\n"
+                commandHistory = ">> " + String(data) + commandHistory
 
                 try {
                     val command = DSSCommand(String(data))

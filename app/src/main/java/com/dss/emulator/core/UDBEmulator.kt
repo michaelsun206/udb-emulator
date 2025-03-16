@@ -20,6 +20,8 @@ class UDBEmulator : IEmulator {
 
     constructor(blePeripheralController: BLEPeripheralController) {
         this.blePeripheralController = blePeripheralController
+        this.setSource("UDB")
+        this.setDestination("RC-RI")
     }
 
     override fun sendData(data: ByteArray) {
@@ -156,28 +158,6 @@ class UDBEmulator : IEmulator {
         Log.d("UDBEmulator", "parseRebootCommand")
     }
 
-    // Function to parse the Register Map change report (RM) command
-    private fun parseRegisterMapChangeReportCommand(command: DSSCommand) {
-        require(command.command == StandardRequest.RM.toString()) { "Invalid command: Expected Register Map Change Report (RM) command" }
-        require(command.data.size == 1) { "Invalid data size: Expected one data entry here" }
-
-        Log.d("UDBEmulator", "parseRegisterMapChangeReportCommand")
-
-        val registerMapBit = command.data[0].toLong()
-
-        for (register in registerList) {
-            if ((1L shl register.regMapBit) and registerMapBit != 0L) {
-                Log.d("UDBEmulator", "parseRegisterMapChangeReportCommand: ${register.name}")
-
-                this.sendCommand(
-                    DSSCommand.createGTCommand(
-                        this.getDestination(), this.getSource(), register.name
-                    )
-                )
-            }
-        }
-    }
-
     private fun handleCommand(command: DSSCommand) {
         when (command.command) {
             StandardRequest.GT.toString() -> parseRegisterGetCommand(command)
@@ -187,7 +167,6 @@ class UDBEmulator : IEmulator {
             StandardRequest.SI.toString() -> parseRegisterSetIDCommand(command)
             StandardRequest.FT.toString() -> parseFactoryTestCommand(command)
             StandardRequest.RB.toString() -> parseRebootCommand(command)
-            StandardRequest.RM.toString() -> parseRegisterMapChangeReportCommand(command)
             else -> throw IllegalArgumentException("Unknown command: ${command.command}")
         }
     }

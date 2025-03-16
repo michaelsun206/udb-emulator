@@ -39,19 +39,19 @@ class RcRiEmulatorActivity : ComponentActivity() {
         historyTextView.text = ""
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.sendCommandButton).setOnClickListener {
-            sendCommand("Hello from RC/RI Emulator")
+//            sendCommand("Hello from RC/RI Emulator")
         }
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandRBButton).setOnClickListener {
-            sendCommand(DSSCommand.createRBCommand("RC-RI", "UDB").commandText)
+            sendCommand(DSSCommand.createRBCommand("RC-RI", "UDB"))
         }
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandFTButton).setOnClickListener {
-            sendCommand(DSSCommand.createFTCommand("RC-RI", "UDB").commandText)
+            sendCommand(DSSCommand.createFTCommand("RC-RI", "UDB"))
         }
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.commandGIButton).setOnClickListener {
-            sendCommand(DSSCommand.createGICommand("RC-RI", "UDB").commandText)
+            sendCommand(DSSCommand.createGICommand("RC-RI", "UDB"))
         }
 
         updateRegisterTable()
@@ -83,6 +83,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
                     }.show()
             }
         }, onDataReceived = {
+            Log.d("RcRiEmulatorActivity", "Received data length: ${it.size}")
             rcriEmulator.onReceiveData(it)
 
             runOnUiThread {
@@ -109,16 +110,11 @@ class RcRiEmulatorActivity : ComponentActivity() {
         devicesDialog.startScanning()
     }
 
-    private fun sendCommand(command: String) {
-        runOnUiThread {
-            historyTextView.text = ">> $command\n${historyTextView.text}"
-        }
-        bleCentralController?.sendCommand(command)
-    }
+    private fun sendCommand(command: DSSCommand) {
+        this.rcriEmulator.sendCommand(command)
 
-    private fun onCommandReceived(command: String) {
         runOnUiThread {
-            historyTextView.text = ">> $command\n${historyTextView.text}"
+            historyTextView.text = this.rcriEmulator.getCommandHistory()
         }
     }
 
@@ -168,7 +164,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
                         sendCommand(
                             DSSCommand.createGTCommand(
                                 "RC-RI", "UDB", register.name
-                            ).commandText
+                            )
                         )
                     }
                 }
@@ -233,7 +229,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 sendCommand(
                     DSSCommand.createSTCommand(
                         "RC-RI", "UDB", register.name, register.getValue().toString()
-                    ).commandText
+                    )
                 );
             } catch (e: Exception) {
                 Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()

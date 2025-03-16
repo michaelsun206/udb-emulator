@@ -77,6 +77,7 @@ class UdbEmulatorActivity : ComponentActivity() {
 
             runOnUiThread {
                 historyTextView.text = udbEmulator.getCommandHistory()
+                updateRegisterTable()
             }
         })
         bleCentralController.startAdvertising()
@@ -214,7 +215,7 @@ class UdbEmulatorActivity : ComponentActivity() {
                 val rMap = 1L shl register.regMapBit
 
                 Registers.REG_MAP.setValue(rMap)
-                sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap).commandText)
+                sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap))
 
                 updateRegisterTable()
             } catch (e: Exception) {
@@ -230,17 +231,11 @@ class UdbEmulatorActivity : ComponentActivity() {
         dialog.show()
     }
 
-    private fun onCommandReceived(command: String) {
-        runOnUiThread {
-            historyTextView.text = "<< $command\n${historyTextView.text}"
-        }
-    }
+    private fun sendCommand(command: DSSCommand) {
+        this.udbEmulator.sendCommand(command)
 
-
-    private fun sendCommand(command: String) {
-        bleCentralController?.sendCommand(command)
         runOnUiThread {
-            historyTextView.text = ">> $command\n${historyTextView.text}"
+            historyTextView.text = this.udbEmulator.getCommandHistory()
         }
     }
 }

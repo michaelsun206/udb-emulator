@@ -4,7 +4,9 @@ import android.util.Log
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.dsscommand.StandardRequest
 import com.dss.emulator.dsscommand.StandardResponse
+import com.dss.emulator.register.registerList
 import com.dss.emulator.register.registerMap
 
 class RCRIEmulator : IEmulator {
@@ -17,6 +19,8 @@ class RCRIEmulator : IEmulator {
 
     constructor(bleCentralController: BLECentralController) {
         this.bleCentralController = bleCentralController
+        this.setSource("RC-RI")
+        this.setDestination("UDB")
     }
 
     override fun sendData(data: ByteArray) {
@@ -65,12 +69,37 @@ class RCRIEmulator : IEmulator {
         registerMap[registerName]?.setValueString(registerValue)
     }
 
+
+    // Function to parse the Register Map change report (RM) command
+    private fun parseRegisterMapChangeReportCommand(command: DSSCommand) {
+        require(command.command == StandardRequest.RM.toString()) { "Invalid command: Expected Register Map Change Report (RM) command" }
+        require(command.data.size == 1) { "Invalid data size: Expected one data entry here" }
+
+        Log.d("UDBEmulator", "parseRegisterMapChangeReportCommand")
+
+        val registerMapBit = command.data[0].toLong()
+
+        for (register in registerList) {
+            if ((1L shl register.regMapBit) and registerMapBit != 0L) {
+                Log.d("UDBEmulator", "parseRegisterMapChangeReportCommand: ${register.name}")
+
+                this.sendCommand(
+                    DSSCommand.createGTCommand(
+                        this.getDestination(), this.getSource(), register.name
+                    )
+                )
+            }
+        }
+    }
+
+
     private fun handleCommand(command: DSSCommand) {
         when (command.command) {
             StandardResponse.OK.toString() -> parseOKResponse(command)
             StandardResponse.NO.toString() -> parseNOResponse(command)
             StandardResponse.ID.toString() -> parseIDResponse(command)
             StandardResponse.RT.toString() -> parseRTResponse(command)
+            StandardRequest.RM.toString() -> parseRegisterMapChangeReportCommand(command)
             else -> throw IllegalArgumentException("Unknown command: ${command.command}")
         }
     }

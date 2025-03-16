@@ -38,7 +38,7 @@ class BLEPeripheralController(
     }
 
     fun sendData(data: ByteArray) {
-//        gattServerManager.sendData(data)
+        gattServerManager.sendData(data)
     }
 
     fun sendCommand(command: String) {
