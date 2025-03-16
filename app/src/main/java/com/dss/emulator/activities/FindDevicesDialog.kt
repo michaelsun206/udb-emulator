@@ -9,18 +9,18 @@ import android.view.WindowManager
 import androidx.activity.ComponentDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.dss.emulator.UDBDevice
-import com.dss.emulator.UDBDeviceAdapter
+import com.dss.emulator.BLEDevice
+import com.dss.emulator.BLEDeviceAdapter
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.udb.R
 
 class FindDevicesDialog(
     private val bleCentralController: BLECentralController,
     context: Context,
-    private val onDeviceSelected: (UDBDevice) -> Unit
+    private val onDeviceSelected: (BLEDevice) -> Unit
 ) : ComponentDialog(context) {
 
-    private var udbDeviceAdapter: UDBDeviceAdapter = UDBDeviceAdapter { device ->
+    private var BLEDeviceAdapter: BLEDeviceAdapter = BLEDeviceAdapter { device ->
         onDeviceSelected(device)
     }
 
@@ -37,7 +37,7 @@ class FindDevicesDialog(
 
     private fun setupRecyclerView() {
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.adapter = udbDeviceAdapter
+        recyclerView.adapter = BLEDeviceAdapter
         recyclerView.layoutManager = LinearLayoutManager(this.context)
     }
 
@@ -66,7 +66,7 @@ class FindDevicesDialog(
     }
 
     fun startScanning() {
-        udbDeviceAdapter.updateDeviceList(emptyList())
+        BLEDeviceAdapter.updateDeviceList(emptyList())
         bleCentralController.startScanning()
     }
 
@@ -74,7 +74,7 @@ class FindDevicesDialog(
         bleCentralController.stopScanning()
     }
 
-    fun addDevice(device: UDBDevice) {
-        udbDeviceAdapter.addDevice(device)
+    fun addDevice(device: BLEDevice) {
+        BLEDeviceAdapter.addDevice(device)
     }
 }

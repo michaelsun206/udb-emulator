@@ -8,12 +8,12 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.util.Log
-import com.dss.emulator.UDBDevice
+import com.dss.emulator.BLEDevice
 import com.dss.emulator.bluetooth.Constants
 
 class BLECentralController(
     private val context: Context,
-    private val onDeviceFound: (UDBDevice) -> Unit,
+    private val onDeviceFound: (BLEDevice) -> Unit,
     private val onDeviceConnected: (BluetoothDevice) -> Unit,
     private val onCommandReceived: (String) -> Unit
 ) {
@@ -98,7 +98,7 @@ class BLECentralController(
     }
 
     @SuppressLint("MissingPermission")
-    fun connectToDevice(device: UDBDevice) {
+    fun connectToDevice(device: BLEDevice) {
         val bluetoothDevice = bluetoothManager?.adapter?.getRemoteDevice(device.address)
         bluetoothGatt = bluetoothDevice?.connectGatt(
             context, false, gattCallback
@@ -110,12 +110,17 @@ class BLECentralController(
     // Send message to device
     @SuppressLint("MissingPermission")
     fun sendCommand(command: String) {
+        sendData(command.toByteArray())
+    }
+
+    @SuppressLint("MissingPermission")
+    fun sendData(data: ByteArray) {
         bluetoothGatt?.let { gatt ->
             val characteristic = gatt.getService(Constants.UDB_SERVICE_UUID)
                 ?.getCharacteristic(Constants.COMMAND_WRITE_CHARACTERISTIC_UUID)
 
             characteristic?.let {
-                it.value = command.toByteArray()
+                it.value = data
                 it.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
                 gatt.writeCharacteristic(it)
             } ?: Log.e("Bluetooth", "Characteristic not found")

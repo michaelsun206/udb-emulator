@@ -5,15 +5,15 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.util.Log
-import com.dss.emulator.UDBDevice
+import com.dss.emulator.BLEDevice
 import com.dss.emulator.bluetooth.Constants
 
 
 class BLEScanner(
     private val bluetoothManager: BluetoothManager,
-    private val onDeviceFound: (UDBDevice) -> Unit
+    private val onDeviceFound: (BLEDevice) -> Unit
 ) {
-    private val scannedDevices = mutableListOf<UDBDevice>()
+    private val scannedDevices = mutableListOf<BLEDevice>()
 
     private var isScanning = false
 
@@ -27,7 +27,7 @@ class BLEScanner(
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
             result?.device?.let { deviceInfo ->
-                val device = UDBDevice(
+                val device = BLEDevice(
                     address = deviceInfo.address,
                     name = deviceInfo.name ?: "Unknown",
                     rssi = result.rssi

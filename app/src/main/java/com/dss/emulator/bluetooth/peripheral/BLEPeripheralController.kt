@@ -37,6 +37,10 @@ class BLEPeripheralController(
         else Log.d("BLEPeripheralController", "Advertising is not running")
     }
 
+    fun sendData(data: ByteArray) {
+//        gattServerManager.sendData(data)
+    }
+
     fun sendCommand(command: String) {
         gattServerManager.sendCommand(command)
     }
