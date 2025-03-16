@@ -14,13 +14,11 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.central.BLECentralController
+import com.dss.emulator.core.RCRIEmulator
 import com.dss.emulator.dsscommand.DSSCommand
-import com.dss.emulator.dsscommand.StandardRequest
-import com.dss.emulator.dsscommand.StandardResponse
 import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.registerList
-import com.dss.emulator.register.registerMap
 import com.dss.emulator.udb.R
 
 class RcRiEmulatorActivity : ComponentActivity() {
@@ -29,7 +27,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var devicesDialog: FindDevicesDialog
 
-    private var bleCentralController: BLECentralController? = null
+    private lateinit var bleCentralController: BLECentralController
+    private lateinit var rcriEmulator: RCRIEmulator
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,7 +54,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
             sendCommand(DSSCommand.createGICommand("RC-RI", "UDB").commandText)
         }
 
-        initializeRegisterTable()
+        updateRegisterTable()
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
@@ -83,39 +82,16 @@ class RcRiEmulatorActivity : ComponentActivity() {
                     .setMessage("Connected to ${it.name}").setPositiveButton("OK") { _, _ ->
                     }.show()
             }
-        }, onCommandReceived = {
-            val command = DSSCommand(it)
-            Log.d("RcRiEmulatorActivity", "Received command: $command")
-            if (command.command == StandardResponse.RT.toString()) {
-                try {
-                    val register = registerMap[command.data[0]]
-                    register?.setValueString(command.data[1])
-                    runOnUiThread {
-                        initializeRegisterTable()
-                    }
-                } catch (e: Exception) {
-                    Log.e("RcRiEmulatorActivity", "Error setting register value: ${e.message}")
-                    runOnUiThread {
-                        Toast.makeText(
-                            this, "Error setting register value: ${e.message}", Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            } else if (command.command == StandardRequest.RM.toString()) {
-                command.data[0].toLong().let {
-                    for (register in registerList) {
-                        if (it and (1L shl register.regMapBit) != 0L) {
-                            sendCommand(
-                                DSSCommand.createGTCommand(
-                                    "RC-RI", "UDB", register.name
-                                ).commandText
-                            )
-                        }
-                    }
-                }
+        }, onDataReceived = {
+            rcriEmulator.onReceiveData(it)
+
+            runOnUiThread {
+                historyTextView.text = rcriEmulator.getCommandHistory()
+                updateRegisterTable()
             }
-            onCommandReceived(it)
         })
+
+        rcriEmulator = RCRIEmulator(bleCentralController)
 
         devicesDialog = FindDevicesDialog(bleCentralController = bleCentralController!!,
             context = this,
@@ -146,7 +122,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
         }
     }
 
-    private fun initializeRegisterTable() {
+    private fun updateRegisterTable() {
         val tableLayout = findViewById<TableLayout>(R.id.tableData)
 
         // Clear existing rows except for the header

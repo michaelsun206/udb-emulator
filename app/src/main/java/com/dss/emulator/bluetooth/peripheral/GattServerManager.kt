@@ -10,12 +10,10 @@ class GattServerManager(
     private val context: Context,
     private val bluetoothManager: BluetoothManager,
     private val onDeviceConnected: (BluetoothDevice?) -> Unit,
-    private val onCommandReceived: (String) -> Unit
+    private val onDataReceived: (ByteArray) -> Unit
 ) {
 
     private var connectedDevice: BluetoothDevice? = null;
-    private var characteristic1: BluetoothGattCharacteristic? = null;
-    private var characteristic2: BluetoothGattCharacteristic? = null;
     private var bluetoothGattServer: BluetoothGattServer? = null
 
     private val gattServerCallback = object : BluetoothGattServerCallback() {
@@ -72,14 +70,11 @@ class GattServerManager(
         ) {
             characteristic?.let {
                 if (it.uuid == Constants.COMMAND_WRITE_CHARACTERISTIC_UUID) {
-                    val receivedData = String(value ?: byteArrayOf())
-                    Log.d("GattServerManager", "Received data on Characteristic 2: $receivedData")
-
                     bluetoothGattServer?.sendResponse(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
 
-                    onCommandReceived(receivedData)
+                    onDataReceived(value ?: byteArrayOf())
                 }
             }
         }

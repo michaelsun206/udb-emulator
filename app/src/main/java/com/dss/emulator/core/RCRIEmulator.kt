@@ -1,32 +1,26 @@
 package com.dss.emulator.core
 
 import android.util.Log
+import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
 import com.dss.emulator.dsscommand.StandardResponse
 import com.dss.emulator.register.registerMap
 
 class RCRIEmulator : IEmulator {
+
     companion object {
-        private lateinit var instance: RCRIEmulator
-
-        @Synchronized
-        fun getInstance(): IEmulator {
-            if (!::instance.isInitialized) {
-                instance = RCRIEmulator()
-            }
-            return instance
-        }
-
         const val PASSWORD = "1776"
     }
 
-    private val blePeripheralController: BLEPeripheralController = TODO()
+    private val bleCentralController: BLECentralController;
 
-    private constructor() {}
+    constructor(bleCentralController: BLECentralController) {
+        this.bleCentralController = bleCentralController
+    }
 
     override fun sendData(data: ByteArray) {
-         blePeripheralController.sendData(data)
+         this.bleCentralController.sendData(data)
     }
 
     override fun parseDollarCommand(command: DSSCommand) {

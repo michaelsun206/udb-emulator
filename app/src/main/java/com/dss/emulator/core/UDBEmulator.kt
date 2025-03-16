@@ -1,7 +1,7 @@
 package com.dss.emulator.core
 
 import android.util.Log
-import com.dss.emulator.bluetooth.central.BLECentralController
+import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.dsscommand.DSSCommand
 import com.dss.emulator.dsscommand.StandardRequest
 import com.dss.emulator.register.Direction
@@ -10,26 +10,20 @@ import com.dss.emulator.register.registerList
 import com.dss.emulator.register.registerMap
 
 class UDBEmulator : IEmulator {
+
     companion object {
-        private lateinit var instance: UDBEmulator
-
-        @Synchronized
-        fun getInstance(): IEmulator {
-            if (!::instance.isInitialized) {
-                instance = UDBEmulator()
-            }
-            return instance
-        }
-
         const val PASSWORD = "1776"
     }
 
-    private val bleCentralController: BLECentralController = TODO()
 
-    private constructor() {}
+    private val blePeripheralController: BLEPeripheralController;
+
+    constructor(blePeripheralController: BLEPeripheralController) {
+        this.blePeripheralController = blePeripheralController
+    }
 
     override fun sendData(data: ByteArray) {
-        bleCentralController.sendData(data)
+        this.blePeripheralController.sendData(data)
     }
 
     override fun parseDollarCommand(command: DSSCommand) {
@@ -89,7 +83,11 @@ class UDBEmulator : IEmulator {
 
         Log.d("UDBEmulator", "parseRegisterGetIDCommand: $serialNumber")
 
-        this.sendCommand(DSSCommand.createIDResponse(this.getDestination(), this.getSource(), serialNumber))
+        this.sendCommand(
+            DSSCommand.createIDResponse(
+                this.getDestination(), this.getSource(), serialNumber
+            )
+        )
     }
 
     // Function to parse the SET ID (SI) command
@@ -102,7 +100,7 @@ class UDBEmulator : IEmulator {
         Log.d("UDBEmulator", "parseRegisterSetIDCommand: $password $serialNumber")
 
         this.sendCommand(
-            if (password == Companion.PASSWORD) {
+            if (password == PASSWORD) {
                 Registers.SN.setValueString(serialNumber)
                 DSSCommand.createOKResponse(this.getDestination(), this.getSource())
             } else {
@@ -119,7 +117,10 @@ class UDBEmulator : IEmulator {
         val registerName = command.data[1]
         val registerValue = command.data[2]
 
-        Log.d("UDBEmulator", "parseSetProtectedRegisterCommand: $password $registerName $registerValue")
+        Log.d(
+            "UDBEmulator",
+            "parseSetProtectedRegisterCommand: $password $registerName $registerValue"
+        )
 
         if (password == Companion.PASSWORD) {
             val register = registerMap[registerName]
@@ -170,9 +171,7 @@ class UDBEmulator : IEmulator {
 
                 this.sendCommand(
                     DSSCommand.createGTCommand(
-                        this.getDestination(),
-                        this.getSource(),
-                        register.name
+                        this.getDestination(), this.getSource(), register.name
                     )
                 )
             }

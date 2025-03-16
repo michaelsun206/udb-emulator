@@ -15,7 +15,7 @@ class BLECentralController(
     private val context: Context,
     private val onDeviceFound: (BLEDevice) -> Unit,
     private val onDeviceConnected: (BluetoothDevice) -> Unit,
-    private val onCommandReceived: (String) -> Unit
+    private val onDataReceived: (ByteArray) -> Unit
 ) {
     private var bluetoothGatt: BluetoothGatt? = null
     private var bluetoothManager: BluetoothManager? =
@@ -73,10 +73,8 @@ class BLECentralController(
                 Constants.DATA_READ_CHARACTERISTIC_UUID -> {
                     val data = characteristic.value
                     if (data != null) {
-                        val message = String(data)
-                        Log.d("BLE Gatt", "Data read: $message")
-
-                        onCommandReceived(message)
+                        Log.d("BLE Gatt", "Data read: $data")
+                        onDataReceived(data)
                     }
                 }
             }

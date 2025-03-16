@@ -14,13 +14,12 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
+import com.dss.emulator.core.UDBEmulator
 import com.dss.emulator.dsscommand.DSSCommand
-import com.dss.emulator.dsscommand.StandardRequest
 import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.Registers
 import com.dss.emulator.register.registerList
-import com.dss.emulator.register.registerMap
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
@@ -29,13 +28,14 @@ class UdbEmulatorActivity : ComponentActivity() {
     private lateinit var historyTextView: TextView
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController
+    private lateinit var udbEmulator: UDBEmulator
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_udb_emulator)
 
-        initializeRegisterTable()
+        updateRegisterTable()
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
 
@@ -72,31 +72,16 @@ class UdbEmulatorActivity : ComponentActivity() {
                         .show()
                 }
             }
-        }, onCommandReceived = {
-            onCommandReceived(it)
-            try {
-                val command = DSSCommand(it)
-                if (!command.isChecksumValid) {
-                    sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
-                }
+        }, onDataReceived = {
+            udbEmulator.onReceiveData(it)
 
-
-                if(command.command == StandardRequest.ST.toString()) {
-                    val command = DSSCommand(it)
-                    val register = registerMap[command.data[0]]
-                    val value = command.data[1]
-                    register?.setValueString(value)
-
-                    runOnUiThread {
-                        initializeRegisterTable()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("UdbEmulatorActivity", "Error handling command: ${e.message}")
-                sendCommand(DSSCommand.createNOResponse("UDB", "RC-RI").commandText)
+            runOnUiThread {
+                historyTextView.text = udbEmulator.getCommandHistory()
             }
         })
         bleCentralController.startAdvertising()
+
+        udbEmulator = UDBEmulator(bleCentralController)
     }
 
     override fun onResume() {
@@ -107,7 +92,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         super.onPause()
     }
 
-    private fun initializeRegisterTable() {
+    private fun updateRegisterTable() {
         val tableLayout = findViewById<TableLayout>(R.id.tableData)
 
         // Clear existing rows except for the header
@@ -231,7 +216,7 @@ class UdbEmulatorActivity : ComponentActivity() {
                 Registers.REG_MAP.setValue(rMap)
                 sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap).commandText)
 
-                initializeRegisterTable()
+                updateRegisterTable()
             } catch (e: Exception) {
                 Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()
             }
