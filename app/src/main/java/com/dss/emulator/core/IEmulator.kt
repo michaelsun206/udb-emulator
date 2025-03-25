@@ -31,6 +31,7 @@ abstract class IEmulator {
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(context, "<< " + command.commandTextNoEnd, Toast.LENGTH_SHORT).show()
         }
+        Thread.sleep(200)
     }
 
     fun getCommandHistory(): String {
@@ -68,7 +69,7 @@ abstract class IEmulator {
                 try {
                     val command = DSSCommand(String(data))
 
-                    logHistory(">> " + command.commandText)
+                    logHistory("<< " + command.commandText)
 
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(context, ">> " + command.commandTextNoEnd , Toast.LENGTH_SHORT).show()
@@ -83,7 +84,10 @@ abstract class IEmulator {
                         Log.e("CommandController", "Invalid checksum")
                     }
 
-                    parseDollarCommand(command)
+                    Thread {
+                        parseDollarCommand(command)
+                    }.start()
+
                 } catch (e: Exception) {
                     Log.e("CommandController", "Error parsing command", e)
                 }
@@ -96,6 +100,7 @@ abstract class IEmulator {
     private fun Byte.toCharCompat(): Char = this.toInt().toChar()
 
     fun logHistory(log: String) {
+        Log.d("CommandController", log)
         commandHistory = log + commandHistory
     }
 }

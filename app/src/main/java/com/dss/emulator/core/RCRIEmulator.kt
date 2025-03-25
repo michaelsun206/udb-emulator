@@ -61,7 +61,7 @@ class RCRIEmulator : IEmulator {
 
     private fun parseRTResponse(command: DSSCommand) {
         require(command.command == StandardResponse.RT.toString()) { "Invalid command: Expected RT (RT) command" }
-        require(command.data.size == 2) { "Invalid data size: Expected no data entries" }
+        require(command.data.size == 2) { "Invalid data size: Expected 2 data entries" }
 
         val registerName = command.data[0]
         val registerValue = command.data[1]
@@ -154,13 +154,14 @@ class RCRIEmulator : IEmulator {
     fun popupInit() {
         this.logHistory("------ popupInit ------\r\n")
 
-        require(this.rState == ReleaseState.IDLE_REQ)
+        require(this.rState == ReleaseState.IDLE_ACK)
 
+        this.rState = ReleaseState.INIT_REQ
         Registers.RSTATE_REQ.setValue(0x10)
         this.sendSTCommand(Registers.RSTATE_REQ)
 
-        Registers.AR_MFG.setValue(0x01)
-        Registers.AR_MODEL.setValue(0x01)
+        Registers.AR_MFG.setValue("ASH")
+        Registers.AR_MODEL.setValue("ARC1-12")
         Registers.SOUNDSPEED.setValue(0x01)
         Registers.RANGE_MAX.setValue(0x01)
 
@@ -168,26 +169,25 @@ class RCRIEmulator : IEmulator {
         this.sendSTCommand(Registers.AR_MODEL)
         this.sendSTCommand(Registers.SOUNDSPEED)
         this.sendSTCommand(Registers.RANGE_MAX)
-
-        this.rState = ReleaseState.INIT_REQ
     }
 
     fun popupConnect() {
         this.logHistory("------ popupConnect ------\r\n")
         require(this.rState == ReleaseState.INIT_OK)
 
+        this.rState = ReleaseState.CON_REQ
         Registers.RSTATE_REQ.setValue(0x20)
         this.sendSTCommand(Registers.RSTATE_REQ)
-        this.rState = ReleaseState.CON_REQ
     }
 
     fun popupSrange() {
         this.logHistory("------ popupSrange ------\r\n")
         require(this.rState == ReleaseState.CON_OK || this.rState == ReleaseState.RNG_SINGLE_OK || this.rState == ReleaseState.RNG_CONT_OK)
 
+        this.rState = ReleaseState.RNG_SINGLE_REQ
+
         Registers.RSTATE_REQ.setValue(0x30)
         this.sendSTCommand(Registers.RSTATE_REQ)
-        this.rState = ReleaseState.RNG_SINGLE_REQ
     }
 
     fun popupCrange() {
@@ -418,5 +418,9 @@ class RCRIEmulator : IEmulator {
         }
 
         Log.d("RCRIEmulator", "new rState: ${this.rState.toString()}")
+    }
+
+    fun getReleaseState(): ReleaseState {
+        return this.rState
     }
 }

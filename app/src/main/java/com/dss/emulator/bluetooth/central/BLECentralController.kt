@@ -73,7 +73,7 @@ class BLECentralController(
                 Constants.DATA_READ_CHARACTERISTIC_UUID -> {
                     val data = characteristic.value
                     if (data != null) {
-                        Log.d("BLE Gatt", "Data read: $data")
+                        Log.d("BLE Gatt", "Data read: ${data.toString()}")
                         onDataReceived(data)
                     }
                 }

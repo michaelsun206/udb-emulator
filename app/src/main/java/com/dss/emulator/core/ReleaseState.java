@@ -1,7 +1,7 @@
 package com.dss.emulator.core;
 
 
-enum ReleaseState {
+public enum ReleaseState {
     IDLE_REQ,
     IDLE_ACK,
     INIT_REQ,

@@ -191,7 +191,7 @@ class UDBEmulator : IEmulator {
             )
         }
 
-
+        Thread.sleep(50)
         Registers.REG_MAP.setValue(0L)
     }
 
@@ -209,24 +209,33 @@ class UDBEmulator : IEmulator {
         when (rStateREQ) {
             0x00 -> { // IDLE_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: IDLE_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 0)
-                Registers.RSTATE_RPT.setValue(0x1) // IDLE_ACK
+                Registers.RSTATE_MAP.setValue(1 shl 0)
                 dispatchRegisterChange(Registers.MODEL)
                 dispatchRegisterChange(Registers.SN)
                 dispatchRegisterChange(Registers.FIRMWARE)
+                sendRMCommand()
+
+
+                Thread.sleep(1000)
+                Registers.RSTATE_RPT.setValue(0x1) // IDLE_ACK
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
             }
 
             0x10 -> { // INIT_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: INIT_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 1)
+                Registers.RSTATE_MAP.setValue(1 shl 1)
                 Registers.RSTATE_RPT.setValue(0x11) // INIT_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
 
+                Thread.sleep(1000)
+                Registers.RR1_LGD.setValue("RR1_LGD")
+                Registers.RR2_LGD.setValue("RR2_LGD")
+                Registers.RR3_LGD.setValue("RR3_LGD")
+                Registers.RR4_LGD.setValue("RR4_LGD")
+
                 // Simulate initialization process
-                Registers.RSTATE_RPT.setValue(0x12) // INIT_OK
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 dispatchRegisterChange(Registers.AR_ACP)
                 dispatchRegisterChange(Registers.RSTATE_MAP)
@@ -242,20 +251,29 @@ class UDBEmulator : IEmulator {
                 dispatchRegisterChange(Registers.SELFTEST)
                 dispatchRegisterChange(Registers.AR_THOLD_DB)
                 sendRMCommand()
+
+                Thread.sleep(2000)
+                Registers.RSTATE_RPT.setValue(0x12) // INIT_PENDING
+                dispatchRegisterChange(Registers.RSTATE_RPT)
+                sendRMCommand()
             }
 
             0x20 -> { // CON_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: CON_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 2)
+                Registers.RSTATE_MAP.setValue(1 shl 2)
                 Registers.RSTATE_RPT.setValue(0x21) // CON_ID1
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
 
+
+                Thread.sleep(2000)
                 // Simulate connection process
                 Registers.RSTATE_RPT.setValue(0x22) // CON_ID2
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
 
+
+                Thread.sleep(2000)
                 Registers.RSTATE_RPT.setValue(0x23) // CON_OK
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -263,7 +281,7 @@ class UDBEmulator : IEmulator {
 
             0x30 -> { // RNG_SINGLE_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: RNG_SINGLE_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 3)
+                Registers.RSTATE_MAP.setValue(1 shl 3)
                 Registers.RSTATE_RPT.setValue(0x31) // RNG_SINGLE_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -279,7 +297,7 @@ class UDBEmulator : IEmulator {
 
             0x40 -> { // RNG_CONT_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: RNG_CONT_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 4)
+                Registers.RSTATE_MAP.setValue(1 shl 4)
                 Registers.RSTATE_RPT.setValue(0x41) // RNG_CONT_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -295,7 +313,7 @@ class UDBEmulator : IEmulator {
 
             0x50 -> { // AT_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: AT_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 5)
+                Registers.RSTATE_MAP.setValue(1 shl 5)
                 Registers.RSTATE_RPT.setValue(0x51) // AT_ARM_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -317,7 +335,7 @@ class UDBEmulator : IEmulator {
 
             0x60 -> { // BCR_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: BCR_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 6)
+                Registers.RSTATE_MAP.setValue(1 shl 6)
                 Registers.RSTATE_RPT.setValue(0x61) // BCR_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -330,7 +348,7 @@ class UDBEmulator : IEmulator {
 
             0x70 -> { // PI_QID_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: PI_QID_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 7)
+                Registers.RSTATE_MAP.setValue(1 shl 7)
                 Registers.RSTATE_RPT.setValue(0x71) // PI_QID_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -346,7 +364,7 @@ class UDBEmulator : IEmulator {
 
             0x80 -> { // PI_ID_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: PI_ID_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 8)
+                Registers.RSTATE_MAP.setValue(1 shl 8)
                 Registers.RSTATE_RPT.setValue(0x81) // PI_ID_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -362,7 +380,7 @@ class UDBEmulator : IEmulator {
 
             0x90 -> { // NT_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: NT_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 9)
+                Registers.RSTATE_MAP.setValue(1 shl 9)
                 Registers.RSTATE_RPT.setValue(0x91) // NT_PENDING
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()
@@ -376,7 +394,7 @@ class UDBEmulator : IEmulator {
 
             0x64 -> { // RB_REQ
                 Log.d("UDBEmulator", "handleRStateREQValueChange: RB_REQ")
-                Registers.RSTATE_MAP.setValue(1L shl 10)
+                Registers.RSTATE_MAP.setValue(1 shl 10)
                 Registers.RSTATE_RPT.setValue(0x65) // RB_ACK
                 dispatchRegisterChange(Registers.RSTATE_RPT)
                 sendRMCommand()

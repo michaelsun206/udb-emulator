@@ -1,6 +1,7 @@
 package com.dss.emulator.activities
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -27,6 +28,7 @@ import com.dss.emulator.udb.R
 class RcRiEmulatorActivity : ComponentActivity() {
 
     private lateinit var historyTextView: TextView
+    private lateinit var releaseStateTextView: TextView
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var devicesDialog: FindDevicesDialog
 
@@ -40,6 +42,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
+
+        releaseStateTextView = findViewById(R.id.releaseStateTextView)
 
         val toggleButton = findViewById<Button>(R.id.toggleButton)
         val tableContainer = findViewById<LinearLayout>(R.id.tableContainer)
@@ -74,6 +78,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.popupIdleButton).setOnClickListener {
             rcriEmulator.popupIdle()
+            updateReleaseStateTextView()
             updateHistoryTextView()
         }
 
@@ -121,6 +126,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
             updateHistoryTextView()
             updateRegisterTable()
+            updateReleaseStateTextView()
         })
 
         rcriEmulator = RCRIEmulator(this, bleCentralController)
@@ -214,11 +220,6 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 tableRow.addView(directionTextView)
 
                 tableLayout.addView(tableRow)
-
-                Log.d(
-                    "UdbEmulatorActivity",
-                    "Register: ${register.name}, Value: ${register.getValue()}"
-                )
             }
         }
     }
@@ -283,5 +284,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
     }
 
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private fun updateReleaseStateTextView() {
+        runOnUiThread {
+            releaseStateTextView.text = rcriEmulator.getReleaseState().toString()
+            releaseStateTextView.setBackgroundColor(Color.BLUE)
+        }
+    }
 
 }
