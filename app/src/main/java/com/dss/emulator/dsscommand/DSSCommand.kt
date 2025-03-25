@@ -172,7 +172,7 @@ data class DSSCommand(
         }
 
     // Command Text without End
-    private val commandTextNoEnd: String
+    val commandTextNoEnd: String
         get() = buildString {
             append("${commandTextBeforeCheckSum},*${computedChecksum}")
         }
