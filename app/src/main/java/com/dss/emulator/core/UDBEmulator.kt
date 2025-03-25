@@ -133,7 +133,7 @@ class UDBEmulator : IEmulator {
             "UDBEmulator", "parseSPCommand: $password $registerName $registerValue"
         )
 
-        if (password == Companion.PASSWORD) {
+        if (password == PASSWORD) {
             val register = registerMap[registerName]
                 ?: throw IllegalArgumentException("Invalid register: '$registerName' not found in register map")
             register.setValueString(registerValue)

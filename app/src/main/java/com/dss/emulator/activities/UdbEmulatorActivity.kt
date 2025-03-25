@@ -94,10 +94,8 @@ class UdbEmulatorActivity : ComponentActivity() {
         }, onDataReceived = {
             udbEmulator.onReceiveData(it)
 
-            runOnUiThread {
-                historyTextView.text = udbEmulator.getCommandHistory()
-                updateRegisterTable()
-            }
+            updateHistoryTextView()
+            updateRegisterTable()
         })
         bleCentralController.startAdvertising()
 
@@ -113,83 +111,92 @@ class UdbEmulatorActivity : ComponentActivity() {
     }
 
     private fun updateRegisterTable() {
-        val tableLayout = findViewById<TableLayout>(R.id.tableData)
+        runOnUiThread {
+            val tableLayout = findViewById<TableLayout>(R.id.tableData)
 
-        // Clear existing rows except for the header
-        val childCount = tableLayout.childCount
-        if (childCount > 0) tableLayout.removeViews(0, childCount)
+            // Clear existing rows except for the header
+            val childCount = tableLayout.childCount
+            if (childCount > 0) tableLayout.removeViews(0, childCount)
 
-        Log.d("UdbEmulatorActivity", "Register List Size: ${registerList.size}")
+            Log.d("UdbEmulatorActivity", "Register List Size: ${registerList.size}")
 
-        // Populate table with registers
-        for ((index, register) in registerList.withIndex()) {
-            val tableRow = TableRow(this)
+            // Populate table with registers
+            for ((index, register) in registerList.withIndex()) {
+                val tableRow = TableRow(this)
 
-            val noTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(
-                    40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
-                )
-                gravity = Gravity.CENTER
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = (index + 1).toString()
-            }
+                val noTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(
+                        40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
+                    )
+                    gravity = Gravity.CENTER
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = (index + 1).toString()
+                }
 
-            val nameTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.name
-            }
+                val nameTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.name
+                }
 
-            val valueTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.getValueString() ?: "null"
+                val valueTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.getValueString() ?: "null"
 
-                // Enable click feedback
-                isClickable = true
-                isFocusable = true
-                setBackgroundResource(android.R.drawable.list_selector_background)
+                    // Enable click feedback
+                    isClickable = true
+                    isFocusable = true
+                    setBackgroundResource(android.R.drawable.list_selector_background)
 
-                // Set OnClickListener on the valueTextView
-                setOnClickListener {
-                    if (register.direction == Direction.BOTH || register.direction == Direction.UDB_TO_GUI) {
-                        showEditDialog(
-                            register, this
-                        )
-                    } else {
-                        Toast.makeText(
-                            this@UdbEmulatorActivity,
-                            "${register.name} is not editable",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                    // Set OnClickListener on the valueTextView
+                    setOnClickListener {
+                        if (register.direction == Direction.BOTH || register.direction == Direction.UDB_TO_GUI) {
+                            showEditDialog(
+                                register, this
+                            )
+                        } else {
+                            Toast.makeText(
+                                this@UdbEmulatorActivity,
+                                "${register.name} is not editable",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
+
+
+                val directionTextView = TextView(this).apply {
+                    layoutParams =
+                        TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.direction.toString()
+                }
+
+                // Add TextViews to TableRow
+                tableRow.addView(noTextView)
+                tableRow.addView(nameTextView)
+                tableRow.addView(valueTextView)
+                tableRow.addView(directionTextView)
+
+                tableLayout.addView(tableRow)
+
+                Log.d(
+                    "UdbEmulatorActivity",
+                    "Register: ${register.name}, Value: ${register.getValue()}"
+                )
             }
-
-
-            val directionTextView = TextView(this).apply {
-                layoutParams =
-                    TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.direction.toString()
-            }
-
-            // Add TextViews to TableRow
-            tableRow.addView(noTextView)
-            tableRow.addView(nameTextView)
-            tableRow.addView(valueTextView)
-            tableRow.addView(directionTextView)
-
-            tableLayout.addView(tableRow)
-
-            Log.d(
-                "UdbEmulatorActivity", "Register: ${register.name}, Value: ${register.getValue()}"
-            )
         }
     }
 
     // Extension function to convert dp to pixels
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private fun updateHistoryTextView() {
+        runOnUiThread {
+            historyTextView.text = udbEmulator.getCommandHistory()
+        }
+    }
 
 
     private fun showEditDialog(register: Register, valueTextView: TextView) {
@@ -252,9 +259,6 @@ class UdbEmulatorActivity : ComponentActivity() {
 
     private fun sendCommand(command: DSSCommand) {
         this.udbEmulator.sendCommand(command)
-
-        runOnUiThread {
-            historyTextView.text = this.udbEmulator.getCommandHistory()
-        }
+        updateHistoryTextView()
     }
 }

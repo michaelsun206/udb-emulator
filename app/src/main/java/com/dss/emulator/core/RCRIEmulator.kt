@@ -144,12 +144,16 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupIdle() {
+        this.logHistory("------ popupIdle ------\r\n")
+
         Registers.RSTATE_REQ.setValue(0)
         this.sendSTCommand(Registers.RSTATE_REQ)
         this.rState = ReleaseState.IDLE_REQ
     }
 
     fun popupInit() {
+        this.logHistory("------ popupInit ------\r\n")
+
         require(this.rState == ReleaseState.IDLE_REQ)
 
         Registers.RSTATE_REQ.setValue(0x10)
@@ -169,6 +173,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupConnect() {
+        this.logHistory("------ popupConnect ------\r\n")
         require(this.rState == ReleaseState.INIT_OK)
 
         Registers.RSTATE_REQ.setValue(0x20)
@@ -177,6 +182,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupSrange() {
+        this.logHistory("------ popupSrange ------\r\n")
         require(this.rState == ReleaseState.CON_OK || this.rState == ReleaseState.RNG_SINGLE_OK || this.rState == ReleaseState.RNG_CONT_OK)
 
         Registers.RSTATE_REQ.setValue(0x30)
@@ -185,6 +191,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupCrange() {
+        this.logHistory("------ popupCrange ------\r\n")
         require(this.rState == ReleaseState.CON_OK || this.rState == ReleaseState.RNG_SINGLE_OK || this.rState == ReleaseState.RNG_CONT_OK)
 
         Registers.RSTATE_REQ.setValue(0x40)
@@ -193,6 +200,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupTrigger() {
+        this.logHistory("------ popupTrigger ------\r\n")
         require(this.rState == ReleaseState.CON_OK || this.rState == ReleaseState.RNG_SINGLE_OK || this.rState == ReleaseState.RNG_CONT_OK)
 
         Registers.RSTATE_REQ.setValue(0x50)
@@ -201,6 +209,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupBroadcast() {
+        this.logHistory("------ popupBroadcast ------\r\n")
         require(this.rState == ReleaseState.INIT_OK)
 
         Registers.RSTATE_REQ.setValue(0x60)
@@ -209,6 +218,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupPIQID() {
+        this.logHistory("------ popupPIQID ------\r\n")
         require(this.rState == ReleaseState.INIT_OK)
 
         Registers.RSTATE_REQ.setValue(0x70)
@@ -217,6 +227,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupPIID() {
+        this.logHistory("------ popupPIID ------\r\n")
         require(this.rState == ReleaseState.INIT_OK)
 
         Registers.RSTATE_REQ.setValue(0x80)
@@ -225,6 +236,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupNT() {
+        this.logHistory("------ popupNT ------\r\n")
         require(this.rState == ReleaseState.IDLE_ACK)
 
         Registers.RSTATE_REQ.setValue(0x90)
@@ -233,6 +245,7 @@ class RCRIEmulator : IEmulator {
     }
 
     fun popupRB() {
+        this.logHistory("------ popupRB ------\r\n")
         require(this.rState == ReleaseState.IDLE_ACK)
 
         Registers.RSTATE_REQ.setValue(0x64)

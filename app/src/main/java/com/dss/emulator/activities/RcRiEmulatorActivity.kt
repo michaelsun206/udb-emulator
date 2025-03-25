@@ -72,6 +72,21 @@ class RcRiEmulatorActivity : ComponentActivity() {
             sendCommand(DSSCommand.createGICommand("RC-RI", "UDB"))
         }
 
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.popupIdleButton).setOnClickListener {
+            rcriEmulator.popupIdle()
+            updateHistoryTextView()
+        }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.popupInitButton).setOnClickListener {
+            rcriEmulator.popupInit()
+            updateHistoryTextView()
+        }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.popupConnectButton).setOnClickListener {
+            rcriEmulator.popupConnect()
+            updateHistoryTextView()
+        }
+
         updateRegisterTable()
 
         permissionsManager = BLEPermissionsManager(this) { granted ->
@@ -104,10 +119,8 @@ class RcRiEmulatorActivity : ComponentActivity() {
             Log.d("RcRiEmulatorActivity", "Received data length: ${it.size}")
             rcriEmulator.onReceiveData(it)
 
-            runOnUiThread {
-                historyTextView.text = rcriEmulator.getCommandHistory()
-                updateRegisterTable()
-            }
+            updateHistoryTextView()
+            updateRegisterTable()
         })
 
         rcriEmulator = RCRIEmulator(this, bleCentralController)
@@ -130,83 +143,83 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
     private fun sendCommand(command: DSSCommand) {
         this.rcriEmulator.sendCommand(command)
-
-        runOnUiThread {
-            historyTextView.text = this.rcriEmulator.getCommandHistory()
-        }
+        updateHistoryTextView()
     }
 
     private fun updateRegisterTable() {
-        val tableLayout = findViewById<TableLayout>(R.id.tableData)
+        runOnUiThread {
+            val tableLayout = findViewById<TableLayout>(R.id.tableData)
 
-        // Clear existing rows except for the header
-        val childCount = tableLayout.childCount
-        if (childCount > 0) tableLayout.removeViews(0, childCount)
+            // Clear existing rows except for the header
+            val childCount = tableLayout.childCount
+            if (childCount > 0) tableLayout.removeViews(0, childCount)
 
-        Log.d("RcRiEmulatorActivity", "Register List Size: ${registerList.size}")
+            Log.d("RcRiEmulatorActivity", "Register List Size: ${registerList.size}")
 
-        // Populate table with registers
-        for ((index, register) in registerList.withIndex()) {
-            val tableRow = TableRow(this)
+            // Populate table with registers
+            for ((index, register) in registerList.withIndex()) {
+                val tableRow = TableRow(this)
 
-            val noTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(
-                    40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
-                )
-                gravity = Gravity.CENTER
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = (index + 1).toString()
-            }
+                val noTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(
+                        40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
+                    )
+                    gravity = Gravity.CENTER
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = (index + 1).toString()
+                }
 
-            val nameTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.name
-            }
+                val nameTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.name
+                }
 
-            val valueTextView = TextView(this).apply {
-                layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.getValueString() ?: "null"
+                val valueTextView = TextView(this).apply {
+                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.getValueString() ?: "null"
 
-                // Enable click feedback
-                isClickable = true
-                isFocusable = true
-                setBackgroundResource(android.R.drawable.list_selector_background)
+                    // Enable click feedback
+                    isClickable = true
+                    isFocusable = true
+                    setBackgroundResource(android.R.drawable.list_selector_background)
 
-                // Set OnClickListener on the valueTextView
-                setOnClickListener {
-                    if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) showEditDialog(
-                        register, this
-                    ) else {
-                        sendCommand(
-                            DSSCommand.createGTCommand(
-                                "RC-RI", "UDB", register.name
+                    // Set OnClickListener on the valueTextView
+                    setOnClickListener {
+                        if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) showEditDialog(
+                            register, this
+                        ) else {
+                            sendCommand(
+                                DSSCommand.createGTCommand(
+                                    "RC-RI", "UDB", register.name
+                                )
                             )
-                        )
+                        }
                     }
                 }
+
+
+                val directionTextView = TextView(this).apply {
+                    layoutParams =
+                        TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
+                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+                    text = register.direction.toString()
+                }
+
+                // Add TextViews to TableRow
+                tableRow.addView(noTextView)
+                tableRow.addView(nameTextView)
+                tableRow.addView(valueTextView)
+                tableRow.addView(directionTextView)
+
+                tableLayout.addView(tableRow)
+
+                Log.d(
+                    "UdbEmulatorActivity",
+                    "Register: ${register.name}, Value: ${register.getValue()}"
+                )
             }
-
-
-            val directionTextView = TextView(this).apply {
-                layoutParams =
-                    TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
-                setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                text = register.direction.toString()
-            }
-
-            // Add TextViews to TableRow
-            tableRow.addView(noTextView)
-            tableRow.addView(nameTextView)
-            tableRow.addView(valueTextView)
-            tableRow.addView(directionTextView)
-
-            tableLayout.addView(tableRow)
-
-            Log.d(
-                "UdbEmulatorActivity", "Register: ${register.name}, Value: ${register.getValue()}"
-            )
         }
     }
 
@@ -262,6 +275,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
         dialog.show()
     }
 
+
+    private fun updateHistoryTextView() {
+        runOnUiThread {
+            historyTextView.text = rcriEmulator.getCommandHistory()
+        }
+    }
 
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 

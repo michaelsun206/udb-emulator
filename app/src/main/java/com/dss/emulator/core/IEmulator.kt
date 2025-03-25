@@ -26,7 +26,7 @@ abstract class IEmulator {
         command.destination = this.getDestination()
         sendData(command.commandText.toByteArray())
 
-        commandHistory = "<< " + command.commandText + commandHistory
+        logHistory(">> " + command.commandText)
 
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(context, "<< " + command.commandTextNoEnd, Toast.LENGTH_SHORT).show()
@@ -68,7 +68,7 @@ abstract class IEmulator {
                 try {
                     val command = DSSCommand(String(data))
 
-                    commandHistory = ">> " + command.commandText + commandHistory
+                    logHistory(">> " + command.commandText)
 
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(context, ">> " + command.commandTextNoEnd , Toast.LENGTH_SHORT).show()
@@ -94,4 +94,8 @@ abstract class IEmulator {
     }
 
     private fun Byte.toCharCompat(): Char = this.toInt().toChar()
+
+    fun logHistory(log: String) {
+        commandHistory = log + commandHistory
+    }
 }
