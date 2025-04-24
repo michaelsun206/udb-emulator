@@ -5,6 +5,7 @@ import android.bluetooth.*
 import android.content.Context
 import android.util.Log
 import com.dss.emulator.bluetooth.Constants
+import com.dss.emulator.bluetooth.DataQueueManager
 
 class GattServerManager(
     private val context: Context,
@@ -74,7 +75,7 @@ class GattServerManager(
                         device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null
                     )
 
-                    onDataReceived(value ?: byteArrayOf())
+                    DataQueueManager.getInstance().addData(value ?: byteArrayOf())
                 }
             }
         }
@@ -125,6 +126,8 @@ class GattServerManager(
     @SuppressLint("MissingPermission")
     fun startGattServer() {
         try {
+            DataQueueManager.getInstance().start()
+            DataQueueManager.getInstance().addListener(onDataReceived)
             bluetoothGattServer = bluetoothManager.openGattServer(context, gattServerCallback)
             bluetoothGattServer?.addService(buildGattService())
             Log.d("GattServerManager", "GATT Server started")
@@ -135,6 +138,8 @@ class GattServerManager(
 
     @SuppressLint("MissingPermission")
     fun stopGattServer() {
+        DataQueueManager.getInstance().stop()
+        DataQueueManager.getInstance().removeListener(onDataReceived)
         bluetoothGattServer?.close()
         Log.d("GattServerManager", "GATT Server stopped")
     }

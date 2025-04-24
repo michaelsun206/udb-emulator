@@ -1,6 +1,8 @@
 package com.dss.emulator.dsscommand
 
 data class DSSCommand(
+    var type: Char = 'I', // 'I' for input, 'R' for response
+    var commandId: Int = 0, // Command ID as a number
     var source: String = "",
     var destination: String = "",
     var command: String = "",
@@ -16,9 +18,16 @@ data class DSSCommand(
         private const val MAX_DATA_FIELD_WIDTH = 100
         private const val COMMAND_WIDTH = 2
         private const val MAX_CHECKSUM_WIDTH = 9
+        private const val MAX_COMMAND_ID_WIDTH = 10
+
+        // Auto-incrementing command ID
+        private var lastCommandId: Int = 0
+        private fun getNextCommandId(): Int = ++lastCommandId
 
         // Regex Components
-        private const val REGEX_START_PART = "\\$"
+        private const val REGEX_START_PART = "\\#"
+        private const val REGEX_TYPE_PART = "(?<Type>[IR])"
+        private const val REGEX_COMMAND_ID_PART = "(?<CommandId>\\d{1,$MAX_COMMAND_ID_WIDTH})"
         private const val REGEX_DESTINATION_PART = "(?<Destination>[\\w-]{1,$MAX_ID_WIDTH})"
         private const val REGEX_SOURCE_PART = "(?<Source>[\\w-]{1,$MAX_ID_WIDTH})"
         private const val REGEX_COMMAND_PART = "(?<Command>([A-Z]{$COMMAND_WIDTH}))"
@@ -28,17 +37,19 @@ data class DSSCommand(
 
         // Compiled Regex Patterns
         private val COMMAND_REGEX = Regex(
-            "$REGEX_START_PART$REGEX_DESTINATION_PART,$REGEX_SOURCE_PART,$REGEX_COMMAND_PART$REGEX_DATA_PART$REGEX_CHECKSUM_PART$REGEX_END_PART"
+            "$REGEX_START_PART$REGEX_TYPE_PART$REGEX_COMMAND_ID_PART,$REGEX_DESTINATION_PART,$REGEX_SOURCE_PART,$REGEX_COMMAND_PART$REGEX_DATA_PART$REGEX_CHECKSUM_PART$REGEX_END_PART"
         )
         private val COMMAND_REGEX_NO_END = Regex(
-            "$REGEX_START_PART$REGEX_DESTINATION_PART,$REGEX_SOURCE_PART,$REGEX_COMMAND_PART$REGEX_DATA_PART$REGEX_CHECKSUM_PART"
+            "$REGEX_START_PART$REGEX_TYPE_PART$REGEX_COMMAND_ID_PART,$REGEX_DESTINATION_PART,$REGEX_SOURCE_PART,$REGEX_COMMAND_PART$REGEX_DATA_PART$REGEX_CHECKSUM_PART"
         )
 
         fun createGTCommand(
-            source: String, destination: String, field: String
+            source: String, destination: String, field: String, commandId: Int = getNextCommandId()
         ): DSSCommand {
             val args = listOf(field)
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.GT.name,
@@ -47,10 +58,16 @@ data class DSSCommand(
         }
 
         fun createSTCommand(
-            source: String, destination: String, field: String, data: String
+            source: String,
+            destination: String,
+            field: String,
+            data: String,
+            commandId: Int = getNextCommandId()
         ): DSSCommand {
             val args = listOf(field) + data
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.ST.name,
@@ -59,10 +76,17 @@ data class DSSCommand(
         }
 
         fun createSPCommand(
-            source: String, destination: String, password: String, field: String, data: String
+            source: String,
+            destination: String,
+            password: String,
+            field: String,
+            data: String,
+            commandId: Int = getNextCommandId()
         ): DSSCommand {
             val args = listOf(password, field) + data
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.SP.name,
@@ -71,9 +95,11 @@ data class DSSCommand(
         }
 
         fun createGICommand(
-            source: String, destination: String
+            source: String, destination: String, commandId: Int = getNextCommandId()
         ): DSSCommand {
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.GI.name,
@@ -81,10 +107,16 @@ data class DSSCommand(
         }
 
         fun createSICommand(
-            source: String, destination: String, password: String, newSN: String
+            source: String,
+            destination: String,
+            password: String,
+            newSN: String,
+            commandId: Int = getNextCommandId()
         ): DSSCommand {
             val args = listOf(password, newSN)
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.SI.name,
@@ -93,23 +125,38 @@ data class DSSCommand(
         }
 
         fun createFTCommand(
-            source: String, destination: String,
+            source: String, destination: String, commandId: Int = getNextCommandId()
         ): DSSCommand {
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.FT.name,
             )
         }
 
-        fun createRBCommand(source: String, destination: String): DSSCommand {
+        fun createRBCommand(
+            source: String, destination: String, commandId: Int = getNextCommandId()
+        ): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = "RB"
+                type = 'I',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = "RB"
             )
         }
 
-        fun createRMCommand(source: String, destination: String, registerMap: Long): DSSCommand {
+        fun createRMCommand(
+            source: String,
+            destination: String,
+            registerMap: Long,
+            commandId: Int = getNextCommandId()
+        ): DSSCommand {
             return DSSCommand(
+                type = 'I',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardRequest.RM.name,
@@ -117,16 +164,26 @@ data class DSSCommand(
             )
         }
 
-        fun createOKResponse(source: String, destination: String): DSSCommand {
+        fun createOKResponse(source: String, destination: String, commandId: Int = 0): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = StandardResponse.OK.name
+                type = 'R',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = StandardResponse.OK.name
             )
         }
 
         fun createRTResponse(
-            source: String, destination: String, registerName: String, registerVaule: String
+            source: String,
+            destination: String,
+            registerName: String,
+            registerVaule: String,
+            commandId: Int = 0
         ): DSSCommand {
             return DSSCommand(
+                type = 'R',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardResponse.RT.name,
@@ -135,9 +192,11 @@ data class DSSCommand(
         }
 
         fun createIDResponse(
-            source: String, destination: String, serialNumber: String
+            source: String, destination: String, serialNumber: String, commandId: Int = 0
         ): DSSCommand {
             return DSSCommand(
+                type = 'R',
+                commandId = commandId,
                 source = source,
                 destination = destination,
                 command = StandardResponse.ID.name,
@@ -145,9 +204,13 @@ data class DSSCommand(
             )
         }
 
-        fun createNOResponse(source: String, destination: String): DSSCommand {
+        fun createNOResponse(source: String, destination: String, commandId: Int = 0): DSSCommand {
             return DSSCommand(
-                source = source, destination = destination, command = StandardResponse.NO.name
+                type = 'R',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = StandardResponse.NO.name
             )
         }
     }
@@ -156,10 +219,9 @@ data class DSSCommand(
     private val computedChecksum: String
         get() = CRC16.compute(commandTextBeforeCheckSum).toString()
 
-
     private val commandTextBeforeCheckSum: String
         get() = buildString {
-            append("$${destination},${source},${command}")
+            append("#${type}${commandId},${destination},${source},${command}")
             if (data.isNotEmpty()) {
                 append(",${data.joinToString(",")}")
             }
@@ -185,6 +247,8 @@ data class DSSCommand(
     constructor(sentence: String) : this() {
         val match = COMMAND_REGEX.matchEntire(sentence) ?: COMMAND_REGEX_NO_END.find(sentence)
         ?: throw IllegalArgumentException("Invalid Sentence")
+        type = match.groups["Type"]?.value?.first() ?: 'I'
+        commandId = match.groups["CommandId"]?.value?.toIntOrNull() ?: 0
         source = match.groups["Source"]?.value ?: ""
         destination = match.groups["Destination"]?.value ?: ""
         command = match.groups["Command"]?.value ?: ""

@@ -10,6 +10,7 @@ import android.content.Context
 import android.util.Log
 import com.dss.emulator.BLEDevice
 import com.dss.emulator.bluetooth.Constants
+import com.dss.emulator.bluetooth.DataQueueManager
 
 class BLECentralController(
     private val context: Context,
@@ -74,7 +75,7 @@ class BLECentralController(
                     val data = characteristic.value
                     if (data != null) {
                         Log.d("BLE Gatt", "Data read: ${data.toString()}")
-                        onDataReceived(data)
+                        DataQueueManager.getInstance().addData(data)
                     }
                 }
             }
@@ -89,10 +90,14 @@ class BLECentralController(
 
     fun startScanning() {
         scanner.startScanning()
+        DataQueueManager.getInstance().start()
+        DataQueueManager.getInstance().addListener(onDataReceived)
     }
 
     fun stopScanning() {
         scanner.stopScanning()
+        DataQueueManager.getInstance().stop()
+        DataQueueManager.getInstance().removeListener(onDataReceived)
     }
 
     @SuppressLint("MissingPermission")
