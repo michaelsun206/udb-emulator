@@ -319,5 +319,4 @@ class RcRiEmulatorActivity : ComponentActivity() {
             releaseStateTextView.setBackgroundColor(Color.BLUE)
         }
     }
-
 }

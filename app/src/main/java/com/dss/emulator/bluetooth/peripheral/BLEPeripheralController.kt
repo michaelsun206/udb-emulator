@@ -20,6 +20,7 @@ class BLEPeripheralController(
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
             onDeviceConnected(device)
         })
+
     fun startGattServer() {
         gattServerManager.startGattServer()
     }
@@ -40,9 +41,5 @@ class BLEPeripheralController(
 
     fun sendData(data: ByteArray) {
         gattServerManager.sendData(data)
-    }
-
-    fun sendCommand(command: String) {
-        gattServerManager.sendCommand(command)
     }
 }

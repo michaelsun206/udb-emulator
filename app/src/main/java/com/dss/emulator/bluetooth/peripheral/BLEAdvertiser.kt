@@ -34,4 +34,3 @@ class BLEAdvertiser(
         Log.d("BLEAdvertiser", "Stopped advertising")
     }
 }
-

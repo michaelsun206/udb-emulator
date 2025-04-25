@@ -27,8 +27,6 @@ import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
-
-
     private lateinit var historyTextView: TextView
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController

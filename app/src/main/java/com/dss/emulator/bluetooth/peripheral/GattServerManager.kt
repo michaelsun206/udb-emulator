@@ -176,26 +176,6 @@ class GattServerManager(
     }
 
     @SuppressLint("MissingPermission")
-    fun sendCommand(value: String) {
-        bluetoothGattServer?.let { server ->
-            val characteristic = server.getService(Constants.UDB_SERVICE_UUID)
-                ?.getCharacteristic(Constants.DATA_READ_CHARACTERISTIC_UUID)
-
-            if (characteristic == null) {
-                Log.e("Bluetooth", "Command Write Characteristic not found")
-                return
-            }
-
-            characteristic.value = value.toByteArray()
-
-            connectedDevice?.let { device ->
-                server.notifyCharacteristicChanged(device, characteristic, false)
-            } ?: Log.e("Bluetooth", "No connected device to notify")
-        }
-    }
-
-
-    @SuppressLint("MissingPermission")
     fun sendData(data: ByteArray) {
         bluetoothGattServer?.let { server ->
             val characteristic = server.getService(Constants.UDB_SERVICE_UUID)

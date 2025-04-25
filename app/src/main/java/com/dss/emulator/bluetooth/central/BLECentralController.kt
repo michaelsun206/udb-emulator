@@ -97,7 +97,6 @@ class BLECentralController(
 
     @SuppressLint("MissingPermission")
     fun connectToDevice(device: BLEDevice) {
-        // Close any existing GATT connection
         bluetoothGatt?.let { gatt ->
             gatt.disconnect()
             gatt.close()
@@ -110,12 +109,6 @@ class BLECentralController(
         )
 
         Log.d("BLECentralController", "Connecting to device: ${device.address}")
-    }
-
-    // Send message to device
-    @SuppressLint("MissingPermission")
-    fun sendCommand(command: String) {
-        sendData(command.toByteArray())
     }
 
     @SuppressLint("MissingPermission")
