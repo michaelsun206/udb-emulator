@@ -97,6 +97,13 @@ class BLECentralController(
 
     @SuppressLint("MissingPermission")
     fun connectToDevice(device: BLEDevice) {
+        // Close any existing GATT connection
+        bluetoothGatt?.let { gatt ->
+            gatt.disconnect()
+            gatt.close()
+            bluetoothGatt = null
+        }
+
         val bluetoothDevice = bluetoothManager?.adapter?.getRemoteDevice(device.address)
         bluetoothGatt = bluetoothDevice?.connectGatt(
             context, false, gattCallback
