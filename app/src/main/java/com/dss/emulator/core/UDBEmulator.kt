@@ -54,7 +54,7 @@ class UDBEmulator : IEmulator {
 
         this.sendCommand(
             DSSCommand.createRTResponse(
-                this.getDestination(), this.getSource(), register.name, registerValue
+                this.getDestination(), this.getSource(), register.name, registerValue, command.commandId
             )
         )
     }
@@ -80,9 +80,9 @@ class UDBEmulator : IEmulator {
 
         this.sendCommand(
             if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
-                DSSCommand.createOKResponse(this.getDestination(), this.getSource())
+                DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
             } else {
-                DSSCommand.createNOResponse(this.getDestination(), this.getSource())
+                DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
             }
         )
     }
@@ -97,7 +97,7 @@ class UDBEmulator : IEmulator {
 
         this.sendCommand(
             DSSCommand.createIDResponse(
-                this.getDestination(), this.getSource(), serialNumber
+                this.getDestination(), this.getSource(), serialNumber, command.commandId
             )
         )
     }
@@ -114,9 +114,9 @@ class UDBEmulator : IEmulator {
         this.sendCommand(
             if (password == PASSWORD) {
                 Registers.SN.setValueString(serialNumber)
-                DSSCommand.createOKResponse(this.getDestination(), this.getSource())
+                DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
             } else {
-                DSSCommand.createNOResponse(this.getDestination(), this.getSource())
+                DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
             }
         )
     }
@@ -140,13 +140,13 @@ class UDBEmulator : IEmulator {
 
             this.sendCommand(
                 if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
-                    DSSCommand.createOKResponse(this.getDestination(), this.getSource())
+                    DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
                 } else {
-                    DSSCommand.createNOResponse(this.getDestination(), this.getSource())
+                    DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
                 }
             )
         }
-        this.sendCommand(DSSCommand.createNOResponse(this.getDestination(), this.getSource()))
+        this.sendCommand(DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId))
     }
 
     // Function to parse the Factory Test (FT) command
