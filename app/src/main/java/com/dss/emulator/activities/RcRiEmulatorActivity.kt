@@ -138,6 +138,7 @@ class RcRiEmulatorActivity : ComponentActivity() {
             .setPositiveButton("OK") { _, _ -> finish() }.show()
     }
 
+    @SuppressLint("MissingPermission")
     private fun handleDeviceConnected(device: android.bluetooth.BluetoothDevice) {
         runOnUiThread {
             devicesDialog.stopScanning()
@@ -263,10 +264,10 @@ class RcRiEmulatorActivity : ComponentActivity() {
         setupDialogViews(dialogView, register)
 
         AlertDialog.Builder(this).setView(dialogView).setPositiveButton("OK") { _, _ ->
-                handleRegisterUpdate(
-                    register, valueTextView, dialogView
-                )
-            }.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }.create().show()
+            handleRegisterUpdate(
+                register, valueTextView, dialogView
+            )
+        }.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }.create().show()
     }
 
     private fun setupDialogViews(dialogView: View, register: Register) {
