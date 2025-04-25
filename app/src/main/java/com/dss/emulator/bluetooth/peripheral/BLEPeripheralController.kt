@@ -20,9 +20,15 @@ class BLEPeripheralController(
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
             onDeviceConnected(device)
         })
+    fun startGattServer() {
+        gattServerManager.startGattServer()
+    }
+
+    fun stopGattServer() {
+        gattServerManager.stopGattServer()
+    }
 
     fun startAdvertising() {
-        gattServerManager.startGattServer()
         if (!isAdvertising) advertiser.startAdvertising()
         else Log.d("BLEPeripheralController", "Advertising is already running")
     }

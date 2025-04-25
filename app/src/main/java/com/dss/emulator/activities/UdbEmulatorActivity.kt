@@ -101,6 +101,7 @@ class UdbEmulatorActivity : ComponentActivity() {
             }
         })
         bleCentralController.startAdvertising()
+        bleCentralController.startGattServer()
 
         udbEmulator = UDBEmulator(this, bleCentralController)
 
@@ -129,6 +130,7 @@ class UdbEmulatorActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         dataQueueManager.stop()
+        bleCentralController.stopGattServer()
     }
 
     private fun updateRegisterTable() {
