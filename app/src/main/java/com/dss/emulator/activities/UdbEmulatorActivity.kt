@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
+import com.dss.emulator.bluetooth.DataQueueManager
 import com.dss.emulator.bluetooth.peripheral.BLEPeripheralController
 import com.dss.emulator.core.UDBEmulator
 import com.dss.emulator.dsscommand.DSSCommand
@@ -32,11 +33,16 @@ class UdbEmulatorActivity : ComponentActivity() {
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController
     private lateinit var udbEmulator: UDBEmulator
+    private lateinit var dataQueueManager: DataQueueManager
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_udb_emulator)
+
+        // Initialize and start DataQueueManager
+        dataQueueManager = DataQueueManager.getInstance()
+        dataQueueManager.start()
 
         updateRegisterTable()
         historyTextView = findViewById(R.id.historyTextView)
@@ -77,12 +83,14 @@ class UdbEmulatorActivity : ComponentActivity() {
         bleCentralController = BLEPeripheralController(this, onDeviceConnected = { device ->
             if (device == null) {
                 bleCentralController.startAdvertising()
+                dataQueueManager.pause() // Pause queue when disconnected
 
                 runOnUiThread {
                     statusText.text = "Waiting For Connection..."
                 }
             } else {
                 bleCentralController.stopAdvertising()
+                dataQueueManager.resume() // Resume queue when connected
 
                 runOnUiThread {
                     statusText.text = "Device: ${device.address}"
@@ -91,23 +99,36 @@ class UdbEmulatorActivity : ComponentActivity() {
                         .show()
                 }
             }
-        }, onDataReceived = {
-            udbEmulator.onReceiveData(it)
-
-            updateHistoryTextView()
-            updateRegisterTable()
         })
         bleCentralController.startAdvertising()
 
         udbEmulator = UDBEmulator(this, bleCentralController)
+
+        // Add listener to handle incoming data
+        dataQueueManager.addListener { data ->
+            udbEmulator.onReceiveData(data)
+
+            updateHistoryTextView()
+            updateRegisterTable()
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        if (!dataQueueManager.isActive()) {
+            dataQueueManager.start()
+        }
+        dataQueueManager.resume()
     }
 
     override fun onPause() {
         super.onPause()
+        dataQueueManager.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dataQueueManager.stop()
     }
 
     private fun updateRegisterTable() {

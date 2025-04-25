@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import com.dss.emulator.bluetooth.BLEPermissionsManager
+import com.dss.emulator.bluetooth.DataQueueManager
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.core.RCRIEmulator
 import com.dss.emulator.dsscommand.DSSCommand
@@ -34,11 +35,16 @@ class RcRiEmulatorActivity : ComponentActivity() {
 
     private lateinit var bleCentralController: BLECentralController
     private lateinit var rcriEmulator: RCRIEmulator
+    private lateinit var dataQueueManager: DataQueueManager
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rc_ri_emulator)
+
+        // Initialize and start DataQueueManager
+        dataQueueManager = DataQueueManager.getInstance()
+        dataQueueManager.start()
 
         historyTextView = findViewById(R.id.historyTextView)
         historyTextView.text = ""
@@ -115,18 +121,12 @@ class RcRiEmulatorActivity : ComponentActivity() {
             runOnUiThread {
                 devicesDialog.stopScanning()
                 devicesDialog.dismiss()
+                dataQueueManager.resume() // Resume queue when connected
 
                 AlertDialog.Builder(this).setTitle("Connected to ${it.name}")
                     .setMessage("Connected to ${it.name}").setPositiveButton("OK") { _, _ ->
                     }.show()
             }
-        }, onDataReceived = {
-            Log.d("RcRiEmulatorActivity", "Received data length: ${it.size}")
-            rcriEmulator.onReceiveData(it)
-
-            updateHistoryTextView()
-            updateRegisterTable()
-            updateReleaseStateTextView()
         })
 
         rcriEmulator = RCRIEmulator(this, bleCentralController)
@@ -138,7 +138,35 @@ class RcRiEmulatorActivity : ComponentActivity() {
                 bleCentralController?.connectToDevice(device)
             })
 
+        // Add listener to handle incoming data
+        dataQueueManager.addListener { data ->
+            Log.d("RcRiEmulatorActivity", "Received data length: ${data.size}")
+            rcriEmulator.onReceiveData(data)
+
+            updateHistoryTextView()
+            updateRegisterTable()
+            updateReleaseStateTextView()
+        }
+
         showDeviceListDialog()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!dataQueueManager.isActive()) {
+            dataQueueManager.start()
+        }
+        dataQueueManager.resume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        dataQueueManager.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dataQueueManager.stop()
     }
 
     private fun showDeviceListDialog() {

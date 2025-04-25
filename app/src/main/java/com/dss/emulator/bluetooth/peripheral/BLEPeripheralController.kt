@@ -7,9 +7,7 @@ import android.content.Context
 import android.util.Log
 
 class BLEPeripheralController(
-    context: Context,
-    private val onDeviceConnected: (BluetoothDevice?) -> Unit,
-    private val onDataReceived: (ByteArray) -> Unit
+    context: Context, private val onDeviceConnected: (BluetoothDevice?) -> Unit
 ) {
     private val advertiser: BLEAdvertiser by lazy { BLEAdvertiser(bluetoothManager.adapter.bluetoothLeAdvertiser) }
     private var bluetoothManager: BluetoothManager =
@@ -21,9 +19,6 @@ class BLEPeripheralController(
         GattServerManager(context, bluetoothManager, onDeviceConnected = { device ->
             Log.d("BLEPeripheralController", "Device connected: ${device?.name}")
             onDeviceConnected(device)
-        }, onDataReceived = { command ->
-            onDataReceived(command)
-            Log.d("BLEPeripheralController", "Command received: $command")
         })
 
     fun startAdvertising() {

@@ -15,8 +15,7 @@ import com.dss.emulator.bluetooth.DataQueueManager
 class BLECentralController(
     private val context: Context,
     private val onDeviceFound: (BLEDevice) -> Unit,
-    private val onDeviceConnected: (BluetoothDevice) -> Unit,
-    private val onDataReceived: (ByteArray) -> Unit
+    private val onDeviceConnected: (BluetoothDevice) -> Unit
 ) {
     private var bluetoothGatt: BluetoothGatt? = null
     private var bluetoothManager: BluetoothManager? =
@@ -92,20 +91,8 @@ class BLECentralController(
         scanner.startScanning()
     }
 
-    fun start() {
-        DataQueueManager.getInstance().addListener(onDataReceived)
-        DataQueueManager.getInstance().start()
-    }
-
-    fun stop() {
-        DataQueueManager.getInstance().removeListener(onDataReceived)
-        DataQueueManager.getInstance().stop()
-    }
-
     fun stopScanning() {
         scanner.stopScanning()
-
-        start()
     }
 
     @SuppressLint("MissingPermission")

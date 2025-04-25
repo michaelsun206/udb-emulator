@@ -11,7 +11,6 @@ class GattServerManager(
     private val context: Context,
     private val bluetoothManager: BluetoothManager,
     private val onDeviceConnected: (BluetoothDevice?) -> Unit,
-    private val onDataReceived: (ByteArray) -> Unit
 ) {
 
     private var connectedDevice: BluetoothDevice? = null;
@@ -126,8 +125,6 @@ class GattServerManager(
     @SuppressLint("MissingPermission")
     fun startGattServer() {
         try {
-            DataQueueManager.getInstance().start()
-            DataQueueManager.getInstance().addListener(onDataReceived)
             bluetoothGattServer = bluetoothManager.openGattServer(context, gattServerCallback)
             bluetoothGattServer?.addService(buildGattService())
             Log.d("GattServerManager", "GATT Server started")
@@ -138,8 +135,6 @@ class GattServerManager(
 
     @SuppressLint("MissingPermission")
     fun stopGattServer() {
-        DataQueueManager.getInstance().stop()
-        DataQueueManager.getInstance().removeListener(onDataReceived)
         bluetoothGattServer?.close()
         Log.d("GattServerManager", "GATT Server stopped")
     }
