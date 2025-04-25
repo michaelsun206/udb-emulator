@@ -64,7 +64,7 @@ abstract class IEmulator {
         }
 
         if (data.size > 1) {
-            if (data[0].toCharCompat() == '$') {
+            if (data[0].toCharCompat() == '#') {
 
                 try {
                     val command = DSSCommand(String(data))

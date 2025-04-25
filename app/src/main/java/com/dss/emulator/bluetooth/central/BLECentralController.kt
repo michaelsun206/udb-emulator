@@ -90,14 +90,22 @@ class BLECentralController(
 
     fun startScanning() {
         scanner.startScanning()
-        DataQueueManager.getInstance().start()
+    }
+
+    fun start() {
         DataQueueManager.getInstance().addListener(onDataReceived)
+        DataQueueManager.getInstance().start()
+    }
+
+    fun stop() {
+        DataQueueManager.getInstance().removeListener(onDataReceived)
+        DataQueueManager.getInstance().stop()
     }
 
     fun stopScanning() {
         scanner.stopScanning()
-        DataQueueManager.getInstance().stop()
-        DataQueueManager.getInstance().removeListener(onDataReceived)
+
+        start()
     }
 
     @SuppressLint("MissingPermission")
