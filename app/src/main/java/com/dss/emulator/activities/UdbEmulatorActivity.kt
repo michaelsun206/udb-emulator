@@ -27,7 +27,13 @@ import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
 
 class UdbEmulatorActivity : ComponentActivity() {
+    // UI Components
     private lateinit var historyTextView: TextView
+    private lateinit var statusText: TextView
+    private lateinit var tableContainer: LinearLayout
+    private lateinit var toggleButton: Button
+
+    // Controllers and Managers
     private lateinit var permissionsManager: BLEPermissionsManager
     private lateinit var bleCentralController: BLEPeripheralController
     private lateinit var udbEmulator: UDBEmulator
@@ -38,75 +44,90 @@ class UdbEmulatorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_udb_emulator)
 
-        // Initialize and start DataQueueManager
-        dataQueueManager = DataQueueManager.getInstance()
-        dataQueueManager.start()
+        initializeComponents()
+        setupUI()
+        setupBluetooth()
+        setupDataQueue()
+    }
 
-        updateRegisterTable()
+    private fun initializeComponents() {
         historyTextView = findViewById(R.id.historyTextView)
+        statusText = findViewById(R.id.statusText)
+        tableContainer = findViewById(R.id.tableContainer)
+        toggleButton = findViewById(R.id.toggleButton)
+
         historyTextView.text = ""
+    }
 
-        val toggleButton = findViewById<Button>(R.id.toggleButton)
-        val tableContainer = findViewById<LinearLayout>(R.id.tableContainer)
-
+    private fun setupUI() {
         var isExpanded = false
-
         toggleButton.setOnClickListener {
-            if (isExpanded) {
-                tableContainer.visibility = View.GONE
-                toggleButton.text = "Show Registers"
-            } else {
-                tableContainer.visibility = View.VISIBLE
-                toggleButton.text = "Hide Registers"
-            }
-            isExpanded = !isExpanded
+            isExpanded = toggleTableVisibility(isExpanded)
         }
+    }
 
-        val statusText = this.findViewById(R.id.statusText) as TextView
+    private fun toggleTableVisibility(isExpanded: Boolean): Boolean {
+        tableContainer.visibility = if (isExpanded) View.GONE else View.VISIBLE
+        toggleButton.text = if (isExpanded) "Show Registers" else "Hide Registers"
+        return !isExpanded
+    }
 
+    private fun setupBluetooth() {
         permissionsManager = BLEPermissionsManager(this) { granted ->
             if (!granted) {
-                Log.e("Permissions", "Bluetooth permissions denied")
-                // Alert and Exit
-                AlertDialog.Builder(this).setTitle("Bluetooth Permissions Denied")
-                    .setMessage("Please grant Bluetooth permissions to use this app.")
-                    .setPositiveButton("OK") { _, _ -> finish() }.show()
-            } else {
-                // Permissions granted, proceed to initialize UI
+                handleBluetoothPermissionDenied()
             }
         }
-
         permissionsManager.checkAndRequestPermissions()
 
         bleCentralController = BLEPeripheralController(this, onDeviceConnected = { device ->
-            if (device == null) {
-                bleCentralController.startAdvertising()
-                dataQueueManager.pause() // Pause queue when disconnected
-
-                runOnUiThread {
-                    statusText.text = "Waiting For Connection..."
-                }
-            } else {
-                bleCentralController.stopAdvertising()
-                dataQueueManager.resume() // Resume queue when connected
-
-                runOnUiThread {
-                    statusText.text = "Device: ${device.address}"
-                    AlertDialog.Builder(this).setTitle("Device Connected")
-                        .setMessage("Device: ${device.address}").setPositiveButton("OK") { _, _ -> }
-                        .show()
-                }
-            }
+            handleDeviceConnection(device)
         })
         bleCentralController.startAdvertising()
         bleCentralController.startGattServer()
+    }
+
+    private fun handleBluetoothPermissionDenied() {
+        Log.e("Permissions", "Bluetooth permissions denied")
+        AlertDialog.Builder(this).setTitle("Bluetooth Permissions Denied")
+            .setMessage("Please grant Bluetooth permissions to use this app.")
+            .setPositiveButton("OK") { _, _ -> finish() }.show()
+    }
+
+    private fun handleDeviceConnection(device: android.bluetooth.BluetoothDevice?) {
+        if (device == null) {
+            bleCentralController.startAdvertising()
+            dataQueueManager.pause()
+            updateStatusText("Waiting For Connection...")
+        } else {
+            bleCentralController.stopAdvertising()
+            dataQueueManager.resume()
+            updateStatusText("Device: ${device.address}")
+            showDeviceConnectedDialog(device)
+        }
+    }
+
+    private fun updateStatusText(text: String) {
+        runOnUiThread {
+            statusText.text = text
+        }
+    }
+
+    private fun showDeviceConnectedDialog(device: android.bluetooth.BluetoothDevice) {
+        runOnUiThread {
+            AlertDialog.Builder(this).setTitle("Device Connected")
+                .setMessage("Device: ${device.address}").setPositiveButton("OK") { _, _ -> }.show()
+        }
+    }
+
+    private fun setupDataQueue() {
+        dataQueueManager = DataQueueManager.getInstance()
+        dataQueueManager.start()
 
         udbEmulator = UDBEmulator(this, bleCentralController)
 
-        // Add listener to handle incoming data
         dataQueueManager.addListener { data ->
             udbEmulator.onReceiveData(data)
-
             updateHistoryTextView()
             updateRegisterTable()
         }
@@ -134,84 +155,68 @@ class UdbEmulatorActivity : ComponentActivity() {
     private fun updateRegisterTable() {
         runOnUiThread {
             val tableLayout = findViewById<TableLayout>(R.id.tableData)
+            tableLayout.removeAllViews()
 
-            // Clear existing rows except for the header
-            val childCount = tableLayout.childCount
-            if (childCount > 0) tableLayout.removeViews(0, childCount)
-
-            Log.d("UdbEmulatorActivity", "Register List Size: ${registerList.size}")
-
-            // Populate table with registers
-            for ((index, register) in registerList.withIndex()) {
-                val tableRow = TableRow(this)
-
-                val noTextView = TextView(this).apply {
-                    layoutParams = TableRow.LayoutParams(
-                        40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT
-                    )
-                    gravity = Gravity.CENTER
-                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                    text = (index + 1).toString()
-                }
-
-                val nameTextView = TextView(this).apply {
-                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                    text = register.name
-                }
-
-                val valueTextView = TextView(this).apply {
-                    layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
-                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                    text = register.getValueString() ?: "null"
-
-                    // Enable click feedback
-                    isClickable = true
-                    isFocusable = true
-                    setBackgroundResource(android.R.drawable.list_selector_background)
-
-                    // Set OnClickListener on the valueTextView
-                    setOnClickListener {
-                        if (register.direction == Direction.BOTH || register.direction == Direction.UDB_TO_GUI) {
-                            showEditDialog(
-                                register, this
-                            )
-                        } else {
-                            Toast.makeText(
-                                this@UdbEmulatorActivity,
-                                "${register.name} is not editable",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-
-
-                val directionTextView = TextView(this).apply {
-                    layoutParams =
-                        TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
-                    setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
-                    text = register.direction.toString()
-                }
-
-                // Add TextViews to TableRow
-                tableRow.addView(noTextView)
-                tableRow.addView(nameTextView)
-                tableRow.addView(valueTextView)
-                tableRow.addView(directionTextView)
-
+            registerList.forEachIndexed { index, register ->
+                val tableRow = createRegisterTableRow(index, register)
                 tableLayout.addView(tableRow)
-
-                Log.d(
-                    "UdbEmulatorActivity",
-                    "Register: ${register.name}, Value: ${register.getValue()}"
-                )
             }
         }
     }
 
-    // Extension function to convert dp to pixels
-    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+    private fun createRegisterTableRow(index: Int, register: Register): TableRow {
+        return TableRow(this).apply {
+            addView(createNumberTextView(index))
+            addView(createNameTextView(register))
+            addView(createValueTextView(register))
+            addView(createDirectionTextView(register))
+        }
+    }
+
+    private fun createNumberTextView(index: Int): TextView {
+        return TextView(this).apply {
+            layoutParams = TableRow.LayoutParams(40.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
+            gravity = Gravity.CENTER
+            setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+            text = (index + 1).toString()
+        }
+    }
+
+    private fun createNameTextView(register: Register): TextView {
+        return TextView(this).apply {
+            layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+            text = register.name
+        }
+    }
+
+    private fun createValueTextView(register: Register): TextView {
+        return TextView(this).apply {
+            layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f)
+            setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+            text = register.getValueString() ?: "null"
+            isClickable = true
+            isFocusable = true
+            setBackgroundResource(android.R.drawable.list_selector_background)
+            setOnClickListener { handleValueClick(register, this) }
+        }
+    }
+
+    private fun createDirectionTextView(register: Register): TextView {
+        return TextView(this).apply {
+            layoutParams = TableRow.LayoutParams(100.dpToPx(), TableRow.LayoutParams.WRAP_CONTENT)
+            setPadding(4.dpToPx(), 4.dpToPx(), 4.dpToPx(), 4.dpToPx())
+            text = register.direction.toString()
+        }
+    }
+
+    private fun handleValueClick(register: Register, valueTextView: TextView) {
+        if (register.direction == Direction.BOTH || register.direction == Direction.UDB_TO_GUI) {
+            showEditDialog(register, valueTextView)
+        } else {
+            Toast.makeText(this, "${register.name} is not editable", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private fun updateHistoryTextView() {
         runOnUiThread {
@@ -219,67 +224,52 @@ class UdbEmulatorActivity : ComponentActivity() {
         }
     }
 
-
     private fun showEditDialog(register: Register, valueTextView: TextView) {
-        val builder = AlertDialog.Builder(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_register, null)
+        setupDialogViews(dialogView, register)
 
-        // Inflate the custom layout
-        val inflater = LayoutInflater.from(this)
-        val dialogView = inflater.inflate(R.layout.dialog_edit_register, null)
+        AlertDialog.Builder(this).setView(dialogView).setPositiveButton("OK") { _, _ ->
+            handleRegisterUpdate(
+                register, valueTextView, dialogView
+            )
+        }.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }.create().show()
+    }
 
-        // Get references to the views
-        val nameTextView = dialogView.findViewById<TextView>(R.id.register_name)
-        val valueTypeTextView = dialogView.findViewById<TextView>(R.id.register_value_type)
-        val descriptionTextView = dialogView.findViewById<TextView>(R.id.register_description)
-        val directionTextView = dialogView.findViewById<TextView>(R.id.register_direction)
-        val inputEditText = dialogView.findViewById<EditText>(R.id.register_value_input)
+    private fun setupDialogViews(dialogView: View, register: Register) {
+        dialogView.findViewById<TextView>(R.id.register_name).text = "Name: ${register.name}"
+        dialogView.findViewById<TextView>(R.id.register_value_type).text =
+            "Value Type: ${register.dataType}"
+        dialogView.findViewById<TextView>(R.id.register_description).text =
+            "Description: ${register.description}"
+        dialogView.findViewById<TextView>(R.id.register_direction).text =
+            "Direction: ${register.direction}"
+        dialogView.findViewById<EditText>(R.id.register_value_input)
+            .setText(register.getValue().toString())
+    }
 
-        nameTextView.text = "Name: ${register.name}"
-        valueTypeTextView.text = "Value Type: ${register.dataType}"
-        descriptionTextView.text = "Description: ${register.description}"
-        directionTextView.text = "Direction: ${register.direction}"
+    private fun handleRegisterUpdate(
+        register: Register, valueTextView: TextView, dialogView: View
+    ) {
+        val newValue = dialogView.findViewById<EditText>(R.id.register_value_input).text.toString()
+        try {
+            register.setValueString(newValue)
+            valueTextView.text = register.getValueString() ?: "null"
 
-        // Set the current value
-        inputEditText.setText(register.getValue().toString())
+            val rMap = 1L shl register.regMapBit
+            Registers.REG_MAP.setValue(rMap)
+            sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap))
 
-        // Set the custom view to the dialog
-        builder.setView(dialogView)
-
-        // Set up the buttons
-        builder.setPositiveButton("OK") { _, _ ->
-            val newValue = inputEditText.text.toString()
-            // Validate and update the register value
-
-            try {
-                register.setValueString(newValue)
-                // Update the TextView
-                valueTextView.text = register.getValueString() ?: "null"
-
-                Log.d(
-                    "UdbEmulatorActivity",
-                    "Register: ${register.name}, Value: ${register.getValue()}"
-                )
-                val rMap = 1L shl register.regMapBit
-
-                Registers.REG_MAP.setValue(rMap)
-                sendCommand(DSSCommand.createRMCommand("UDB", "RC-RI", rMap))
-
-                updateRegisterTable()
-            } catch (e: Exception) {
-                Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            updateRegisterTable()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Invalid input: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-        builder.setNegativeButton("Cancel") { dialog, which ->
-            dialog.cancel()
-        }
-
-        // Create and show the dialog
-        val dialog = builder.create()
-        dialog.show()
     }
 
     private fun sendCommand(command: DSSCommand) {
-        this.udbEmulator.sendCommand(command)
+        udbEmulator.sendCommand(command)
         updateHistoryTextView()
     }
+
+    // Extension function to convert dp to pixels
+    private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 }
