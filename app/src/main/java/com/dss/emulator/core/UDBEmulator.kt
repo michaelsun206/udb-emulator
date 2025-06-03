@@ -9,6 +9,12 @@ import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.Registers
 import com.dss.emulator.register.registerMap
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import kotlin.random.Random
 
 class UDBEmulator : IEmulator {
 
@@ -18,13 +24,25 @@ class UDBEmulator : IEmulator {
 
 
     private val blePeripheralController: BLEPeripheralController;
+    private val firmwareLines: MutableList<String> = mutableListOf()
+    private val appContext: Context
 
     constructor(
         context: Context, blePeripheralController: BLEPeripheralController
     ) : super(context) {
         this.blePeripheralController = blePeripheralController
+        this.appContext = context.applicationContext
         this.setSource("UDB")
         this.setDestination("RC-RI")
+
+        // add random firmware lines
+//        for (i in 0..100) {
+//            firmwareLines.add("Line $i: ${Random.nextInt(1000)}")
+//        }
+    }
+
+    fun getFirmwareLines(): List<String> {
+        return firmwareLines
     }
 
     override fun sendData(data: ByteArray) {
@@ -54,7 +72,11 @@ class UDBEmulator : IEmulator {
 
         this.sendCommand(
             DSSCommand.createRTResponse(
-                this.getDestination(), this.getSource(), register.name, registerValue, command.commandId
+                this.getDestination(),
+                this.getSource(),
+                register.name,
+                registerValue,
+                command.commandId
             )
         )
     }
@@ -80,9 +102,13 @@ class UDBEmulator : IEmulator {
 
         this.sendCommand(
             if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
-                DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
+                DSSCommand.createOKResponse(
+                    this.getDestination(), this.getSource(), command.commandId
+                )
             } else {
-                DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
+                DSSCommand.createNOResponse(
+                    this.getDestination(), this.getSource(), command.commandId
+                )
             }
         )
     }
@@ -114,9 +140,13 @@ class UDBEmulator : IEmulator {
         this.sendCommand(
             if (password == PASSWORD) {
                 Registers.SN.setValueString(serialNumber)
-                DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
+                DSSCommand.createOKResponse(
+                    this.getDestination(), this.getSource(), command.commandId
+                )
             } else {
-                DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
+                DSSCommand.createNOResponse(
+                    this.getDestination(), this.getSource(), command.commandId
+                )
             }
         )
     }
@@ -140,13 +170,21 @@ class UDBEmulator : IEmulator {
 
             this.sendCommand(
                 if (register.direction == Direction.GUI_TO_UDB || register.direction == Direction.BOTH) {
-                    DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
+                    DSSCommand.createOKResponse(
+                        this.getDestination(), this.getSource(), command.commandId
+                    )
                 } else {
-                    DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId)
+                    DSSCommand.createNOResponse(
+                        this.getDestination(), this.getSource(), command.commandId
+                    )
                 }
             )
         }
-        this.sendCommand(DSSCommand.createNOResponse(this.getDestination(), this.getSource(), command.commandId))
+        this.sendCommand(
+            DSSCommand.createNOResponse(
+                this.getDestination(), this.getSource(), command.commandId
+            )
+        )
     }
 
     // Function to parse the Factory Test (FT) command
@@ -158,13 +196,46 @@ class UDBEmulator : IEmulator {
         Log.d("UDBEmulator", "parseFactoryTestCommand")
     }
 
+    // Function to parse the firmware load (LD) command
+    private fun parseLDCommand(command: DSSCommand) {
+        require(command.command == StandardRequest.LD.toString()) { "Invalid command: Expected LD (firmware load) command" }
+        require(command.data.size == 1) { "Expected exactly one data entry in LD command" }
+
+        val line = command.data[0].trim()
+        Log.d("UDBEmulator", "Received firmware line: $line")
+
+        firmwareLines.add(line)
+
+        this.sendCommand(
+            DSSCommand.createAckResponse(this.getDestination(), this.getSource(), command.commandId)
+        )
+    }
+
     // Function to parse the Reboot (RB) command
     private fun parseRBCommand(command: DSSCommand) {
         require(command.command == StandardRequest.RB.toString()) { "Invalid command: Expected Reboot (RB) command" }
-        // Implement the reboot logic here
-        // For demonstration, we'll return an OK response
+        Log.d("UDBEmulator", "Reboot requested. Applying firmware...")
 
-        Log.d("UDBEmulator", "parseRebootCommand")
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val firmwareFile = File(appContext.filesDir, "firmware_${timestamp}.bin")
+
+        try {
+            FileOutputStream(firmwareFile).use { fos ->
+                for ((index, line) in firmwareLines.withIndex()) {
+                    fos.write((line + "\n").toByteArray())
+                    Log.d("UDBEmulator", "Saved firmware line $index: $line")
+                }
+            }
+            Log.i("UDBEmulator", "Firmware saved to: ${firmwareFile.absolutePath}")
+        } catch (e: Exception) {
+            Log.e("UDBEmulator", "Failed to save firmware: ${e.message}")
+        }
+
+//        firmwareLines.clear()
+
+        this.sendCommand(
+            DSSCommand.createOKResponse(this.getDestination(), this.getSource(), command.commandId)
+        )
     }
 
     private fun handleCommand(command: DSSCommand) {
@@ -176,6 +247,7 @@ class UDBEmulator : IEmulator {
             StandardRequest.SI.toString() -> parseSICommand(command)
             StandardRequest.FT.toString() -> parseFTCommand(command)
             StandardRequest.RB.toString() -> parseRBCommand(command)
+            StandardRequest.LD.toString() -> parseLDCommand(command)
             else -> throw IllegalArgumentException("Unknown command: ${command.command}")
         }
     }

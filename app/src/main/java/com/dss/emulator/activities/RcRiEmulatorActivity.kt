@@ -16,15 +16,18 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import com.dss.emulator.bluetooth.BLEPermissionsManager
 import com.dss.emulator.bluetooth.DataQueueManager
 import com.dss.emulator.bluetooth.central.BLECentralController
 import com.dss.emulator.core.RCRIEmulator
 import com.dss.emulator.dsscommand.DSSCommand
+import com.dss.emulator.fake.FakeFirmwareGenerator
 import com.dss.emulator.register.Direction
 import com.dss.emulator.register.Register
 import com.dss.emulator.register.registerList
 import com.dss.emulator.udb.R
+import kotlinx.coroutines.launch
 
 class RcRiEmulatorActivity : ComponentActivity() {
     // UI Components
@@ -103,6 +106,10 @@ class RcRiEmulatorActivity : ComponentActivity() {
         findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.popupConnectButton).setOnClickListener {
             rcriEmulator.popupConnect()
             updateHistoryTextView()
+        }
+
+        findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.firmwareUpdateButton).setOnClickListener {
+            updateFirmware()
         }
     }
 
@@ -313,4 +320,41 @@ class RcRiEmulatorActivity : ComponentActivity() {
     }
 
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+    private fun updateFirmware() {
+        val progressDialog = AlertDialog.Builder(this)
+            .setTitle("Uploading Firmware")
+            .setMessage("Please wait...")
+            .setCancelable(false)
+            .create()
+
+        progressDialog.show()
+
+        lifecycleScope.launch {
+            try {
+                val firmwareStream = FakeFirmwareGenerator.generate()
+
+                rcriEmulator.setPendingAckCallback {
+                    runOnUiThread {
+                        updateHistoryTextView()
+                    }
+                }
+
+                rcriEmulator.uploadFirmwareFromStream(firmwareStream) { progress ->
+                    runOnUiThread {
+                        progressDialog.setMessage("Uploading firmware... $progress%")
+                    }
+                }
+
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this@RcRiEmulatorActivity, "Firmware upload complete", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    progressDialog.dismiss()
+                    Toast.makeText(this@RcRiEmulatorActivity, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 }

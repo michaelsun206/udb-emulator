@@ -16,7 +16,6 @@ data class DSSCommand(
         private const val MAX_DATA_POINTS = 3
         private const val MAX_ID_WIDTH = 10
         private const val MAX_DATA_FIELD_WIDTH = 100
-        private const val COMMAND_WIDTH = 2
         private const val MAX_CHECKSUM_WIDTH = 9
         private const val MAX_COMMAND_ID_WIDTH = 10
 
@@ -30,7 +29,7 @@ data class DSSCommand(
         private const val REGEX_COMMAND_ID_PART = "(?<CommandId>\\d{1,$MAX_COMMAND_ID_WIDTH})"
         private const val REGEX_DESTINATION_PART = "(?<Destination>[\\w-]{1,$MAX_ID_WIDTH})"
         private const val REGEX_SOURCE_PART = "(?<Source>[\\w-]{1,$MAX_ID_WIDTH})"
-        private const val REGEX_COMMAND_PART = "(?<Command>([A-Z]{$COMMAND_WIDTH}))"
+        private const val REGEX_COMMAND_PART = "(?<Command>([A-Z]{2,3}))"
         private const val REGEX_DATA_PART = """(?:,(?<Data>(?:[^*,]+(?:,[^*,]*)*)?))?"""
         private const val REGEX_CHECKSUM_PART = """(?:,\*(?<Checksum>\d{1,$MAX_CHECKSUM_WIDTH}))?"""
         private const val REGEX_END_PART = "[\r][\n]"
@@ -174,6 +173,16 @@ data class DSSCommand(
             )
         }
 
+        fun createAckResponse(source: String, destination: String, commandId: Int = 0): DSSCommand {
+            return DSSCommand(
+                type = 'R',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = StandardResponse.ACK.name
+            )
+        }
+
         fun createRTResponse(
             source: String,
             destination: String,
@@ -211,6 +220,39 @@ data class DSSCommand(
                 source = source,
                 destination = destination,
                 command = StandardResponse.NO.name
+            )
+        }
+
+        fun createLDCommand(
+            source: String,
+            destination: String,
+            listOf: List<String>,
+            commandId: Int = getNextCommandId()
+        ): DSSCommand {
+            return DSSCommand(
+                type = 'I',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = StandardRequest.LD.name,
+                data = listOf
+            )
+        }
+
+        fun createCustomCommand(
+            destination: String,
+            source: String,
+            cmd: String,
+            listOf: List<String>,
+            commandId: Int = getNextCommandId()
+        ): DSSCommand {
+            return DSSCommand(
+                type = 'I',
+                commandId = commandId,
+                source = source,
+                destination = destination,
+                command = cmd,
+                data = listOf
             )
         }
     }

@@ -32,6 +32,7 @@ class UdbEmulatorActivity : ComponentActivity() {
     private lateinit var statusText: TextView
     private lateinit var tableContainer: LinearLayout
     private lateinit var toggleButton: Button
+    private lateinit var viewFirmwareButton: Button
 
     // Controllers and Managers
     private lateinit var permissionsManager: BLEPermissionsManager
@@ -55,6 +56,7 @@ class UdbEmulatorActivity : ComponentActivity() {
         statusText = findViewById(R.id.statusText)
         tableContainer = findViewById(R.id.tableContainer)
         toggleButton = findViewById(R.id.toggleButton)
+        viewFirmwareButton = findViewById(R.id.viewFirmwareButton)
 
         historyTextView.text = ""
     }
@@ -63,6 +65,10 @@ class UdbEmulatorActivity : ComponentActivity() {
         var isExpanded = false
         toggleButton.setOnClickListener {
             isExpanded = toggleTableVisibility(isExpanded)
+        }
+
+        viewFirmwareButton.setOnClickListener {
+            showFirmwareDialog()
         }
     }
 
@@ -268,6 +274,27 @@ class UdbEmulatorActivity : ComponentActivity() {
     private fun sendCommand(command: DSSCommand) {
         udbEmulator.sendCommand(command)
         updateHistoryTextView()
+    }
+
+    private fun showFirmwareDialog() {
+        val firmwareLines = udbEmulator.getFirmwareLines()
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_firmware, null)
+        val firmwareTextView = dialogView.findViewById<TextView>(R.id.firmwareTextView)
+        
+        firmwareTextView.text = firmwareLines.joinToString("\n")
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Firmware Content")
+            .setView(dialogView)
+            .create()
+
+        dialog.setOnShowListener {
+            val width = resources.displayMetrics.widthPixels * 0.9
+            val height = resources.displayMetrics.heightPixels * 0.8
+            dialog.window?.setLayout(width.toInt(), height.toInt())
+        }
+
+        dialog.show()
     }
 
     // Extension function to convert dp to pixels

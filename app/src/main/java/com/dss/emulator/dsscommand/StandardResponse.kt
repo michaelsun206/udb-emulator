@@ -6,6 +6,5 @@ enum class StandardResponse(val value: Int) {
     ID(2), // ID Response
     RT(3),  // Return Field Response
     ACK(4),
-    NAK(5),
-
+    NAK(5)
 }

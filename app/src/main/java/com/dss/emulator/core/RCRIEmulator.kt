@@ -10,6 +10,17 @@ import com.dss.emulator.register.Register
 import com.dss.emulator.register.Registers
 import com.dss.emulator.register.registerList
 import com.dss.emulator.register.registerMap
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.net.URL
 
 class RCRIEmulator : IEmulator {
 
@@ -18,11 +29,16 @@ class RCRIEmulator : IEmulator {
     }
 
     private val bleCentralController: BLECentralController;
+    private var pendingAckCallback: ((DSSCommand) -> Unit)? = null;
 
     constructor(context: Context, bleCentralController: BLECentralController) : super(context) {
         this.bleCentralController = bleCentralController
         this.setSource("RC-RI")
         this.setDestination("UDB")
+    }
+
+    fun setPendingAckCallback(callback: (DSSCommand) -> Unit) {
+        pendingAckCallback = callback
     }
 
     override fun sendData(data: ByteArray) {
@@ -102,8 +118,28 @@ class RCRIEmulator : IEmulator {
 
     private fun handleCommand(command: DSSCommand) {
         when (command.command) {
-            StandardResponse.OK.toString() -> parseOKResponse(command)
-            StandardResponse.NO.toString() -> parseNOResponse(command)
+            StandardResponse.OK.toString() -> {
+                parseOKResponse(command)
+                pendingAckCallback?.invoke(command)
+                pendingAckCallback = null
+            }
+
+            StandardResponse.NO.toString() -> {
+                parseNOResponse(command)
+                pendingAckCallback?.invoke(command)
+                pendingAckCallback = null
+            }
+
+            StandardResponse.ACK.toString() -> {
+                pendingAckCallback?.invoke(command)
+                pendingAckCallback = null
+            }
+
+            StandardResponse.NAK.toString() -> {
+                pendingAckCallback?.invoke(command)
+                pendingAckCallback = null
+            }
+
             StandardResponse.ID.toString() -> parseIDResponse(command)
             StandardResponse.RT.toString() -> parseRTResponse(command)
             StandardRequest.RM.toString() -> parseRMCommand(command)
@@ -422,5 +458,84 @@ class RCRIEmulator : IEmulator {
 
     fun getReleaseState(): ReleaseState {
         return this.rState
+    }
+
+    fun updateFirmwareFromUrl(firmwareUrl: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val url = URL(firmwareUrl)
+                val connection = url.openConnection()
+                val inputStream = connection.getInputStream()
+
+                uploadFirmwareFromStream(inputStream)
+
+            } catch (e: Exception) {
+                Log.e("RCRIEmulator", "Failed to download firmware: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun uploadFirmwareFromStream(inputStream: InputStream, onProgress: ((Int) -> Unit)? = null) {
+        val reader = BufferedReader(InputStreamReader(inputStream))
+        val lines = reader.readLines()
+
+        Log.d("RCRIEmulator", "Firmware line count: ${lines.size}")
+
+        withContext(Dispatchers.IO) {
+            for ((index, rawLine) in lines.withIndex()) {
+                val line = rawLine.trim()
+                if (line.isEmpty()) continue
+
+                val success = sendFirmwareLine(line)
+                if (!success) {
+                    Log.e("RCRIEmulator", "Firmware upload failed at line $index: $line")
+                    return@withContext
+                }
+
+                // Calculate and report progress
+                val progress = ((index + 1) * 100) / lines.size
+                onProgress?.invoke(progress)
+
+                delay(100) // pacing delay
+            }
+
+            // Send reboot
+            sendCommand(
+                DSSCommand.createRBCommand(getDestination(), getSource())
+            )
+
+            // Report 100% completion
+            onProgress?.invoke(100)
+
+            Log.d("RCRIEmulator", "Firmware upload complete, sent reboot.")
+        }
+    }
+
+    private suspend fun sendFirmwareLine(line: String): Boolean {
+        val maxRetries = 5
+        var attempts = 0
+
+        while (attempts < maxRetries) {
+            val command = DSSCommand.createLDCommand(getDestination(), getSource(), listOf(line))
+            val deferredAck = CompletableDeferred<Boolean>()
+
+            setPendingAckCallback { response ->
+                if (response.command == StandardResponse.OK.toString() || response.command == "ACK") {
+                    deferredAck.complete(true)
+                } else {
+                    deferredAck.complete(false)
+                }
+            }
+
+            sendCommand(command)
+
+            val result = withTimeoutOrNull(3000) { deferredAck.await() } ?: false
+            if (result) return true
+
+            Log.w("RCRIEmulator", "Retrying firmware line: $line (attempt ${attempts + 1})")
+            attempts++
+        }
+
+        return false
     }
 }

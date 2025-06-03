@@ -8,5 +8,6 @@ enum class StandardRequest(val value: Int) {
     SI(4), // Set UDB Serial Number
     FT(5), // Start Factory Test
     RB(6), // Reboot
-    RM(7), //Register Map Change Report
+    RM(7), // Register Map Change Report
+    LD(8), // Firmware Line
 }
