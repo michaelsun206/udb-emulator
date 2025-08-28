@@ -352,6 +352,13 @@ class RcRiEmulatorActivity : ComponentActivity() {
             } catch (e: Exception) {
                 runOnUiThread {
                     progressDialog.dismiss()
+                    // Show Failed Dialog
+                    val failedDialog = AlertDialog.Builder(this@RcRiEmulatorActivity)
+                        .setTitle("Upload Failed")
+                        .setMessage("Failed to upload firmware: ${e.message}")
+                        .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                        .create()
+                    failedDialog.show()
                     Toast.makeText(this@RcRiEmulatorActivity, "Upload failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }

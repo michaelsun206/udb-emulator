@@ -489,7 +489,7 @@ class RCRIEmulator : IEmulator {
                 val success = sendFirmwareLine(line)
                 if (!success) {
                     Log.e("RCRIEmulator", "Firmware upload failed at line $index: $line")
-                    return@withContext
+                    throw Exception("Firmware upload failed at line $index: $line")
                 }
 
                 // Calculate and report progress
